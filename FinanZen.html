@@ -1729,11 +1729,56 @@ function tryPat(text, patterns){
   return null;
 }
 
-/* ── Parse amount string ── */
+/* ── Parse amount string (handles MX and EU formats) ── */
 function parseAmt(s){
   if(s==null) return null;
-  const n = parseFloat(s.toString().replace(/[$\s,]/g,'').replace(/\(([^)]+)\)/,'-$1'));
+  let str = s.toString().replace(/\s/g,'').replace(/\(([^)]+)\)/,'-$1').replace(/[$MXN]/gi,'');
+  // Detect format: if last separator is comma with 2 digits → EU format (1.234,56)
+  if(/\d{1,3}(?:\.\d{3})+,\d{2}$/.test(str)){
+    str = str.replace(/\./g,'').replace(',','.');
+  } else {
+    str = str.replace(/,/g,'');
+  }
+  const n = parseFloat(str);
   return isNaN(n) ? null : n;
+}
+
+/* ── Find a monetary value near a label (same line OR next lines) ── */
+function nearLabel(lines, labelPatterns, maxLookAhead){
+  maxLookAhead = maxLookAhead||3;
+  // Regex that captures a money amount (handles $, commas, periods)
+  const AMT = /\$?\s*([\d]{1,3}(?:[,.][\d]{3})*[.,]\d{2}|[\d,]+\.\d{2}|\d+)/;
+  for(const lp of labelPatterns){
+    for(let i=0; i<lines.length; i++){
+      if(!lp.test(lines[i])) continue;
+      // Try same line (remove the label part first)
+      const after = lines[i].replace(lp,'');
+      let m = after.match(AMT);
+      if(m && parseFloat(m[1].replace(/,/g,''))>0) return m[1];
+      // Try next 1..maxLookAhead lines
+      for(let d=1; d<=maxLookAhead && i+d<lines.length; d++){
+        const next = lines[i+d];
+        if(next.length>80) continue; // skip long lines (probably a different section)
+        m = next.match(AMT);
+        if(m && parseFloat(m[1].replace(/,/g,''))>0) return m[1];
+      }
+    }
+  }
+  return null;
+}
+
+/* ── Find a % rate near a label ── */
+function nearLabelPct(lines, labelPatterns){
+  const PCT = /([\d]+\.?\d*)\s*%/;
+  for(const lp of labelPatterns){
+    for(let i=0; i<lines.length; i++){
+      if(!lp.test(lines[i])) continue;
+      let m = lines[i].match(PCT);
+      if(m) return m[1];
+      if(i+1<lines.length){ m = lines[i+1].match(PCT); if(m) return m[1]; }
+    }
+  }
+  return null;
 }
 
 /* ── Bank detection ── */
@@ -1755,90 +1800,172 @@ function detectBank(T){
   return {id:'otro', name:'Banco', color:'#6C63FF'};
 }
 
-/* ── Main statement parser ── */
+/* ── Main statement parser (v2 — dual-pass + fallbacks) ── */
 function parseStatement(rawText){
-  const T = rawText.toUpperCase();
+  const T    = rawText.toUpperCase().replace(/\r/g,'');
+  const lines = T.split('\n').map(l=>l.trim()).filter(Boolean);
   const bankInfo = detectBank(T);
 
-  /* Card number - last 4 digits */
-  const lastFour = tryPat(T, [
-    /(?:\*{4}[\s\-]?){3}(\d{4})/,
-    /(?:X{4}[\s\-]?){3}(\d{4})/,
-    /XXXX[\s\-]XXXX[\s\-]XXXX[\s\-](\d{4})/,
-    /TERMINACI[OÓ]N\s*:?\s*(\d{4})/,
-    /[ÚU]LTIMOS?\s+(?:4\s+)?D[ÍI]GITOS?\s*:?\s*(\d{4})/,
-    /N[UÚ]MERO\s+DE\s+TARJETA\s*:?\s*[\d\s\*X]*?(\d{4})(?:\s|$)/,
-  ]);
-
-  /* Balance / deuda */
-  const balanceRaw = tryPat(T, [
-    /SALDO\s+TOTAL\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /TOTAL\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /PAGO\s+TOTAL\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /SALDO\s+AL\s+CORTE\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /SALDO\s+DEUDOR\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /NUEVO\s+SALDO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /SALDO\s+ACTUAL\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /SALDO\s+FINAL\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /SALDO\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /IMPORTE\s+DEL\s+ESTADO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-  ]);
-
-  /* Credit limit */
-  const limitRaw = tryPat(T, [
-    /L[ÍI]NEA\s+DE\s+CR[ÉE]DITO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /L[ÍI]MITE\s+DE\s+CR[ÉE]DITO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /CR[ÉE]DITO\s+TOTAL\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /L[ÍI]MITE\s+AUTORIZADO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /CR[ÉE]DITO\s+ASIGNADO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /LINEA\s+AUTORIZADA\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-  ]);
-
-  /* Annual interest rate */
-  const annualRateRaw = tryPat(T, [
-    /TASA\s+(?:DE\s+)?INTER[ÉE]S\s+ANUAL\s+ORDINARIA[^%\d]*([\d]+\.?\d*)\s*%/,
-    /TASA\s+(?:DE\s+)?INTER[ÉE]S\s+ANUAL[^%\d]*([\d]+\.?\d*)\s*%/,
-    /TASA\s+ANUAL\s+(?:DE\s+)?INTER[ÉE]S[^%\d]*([\d]+\.?\d*)\s*%/,
-    /INTER[ÉE]S\s+ANUAL\s*:?\s*([\d]+\.?\d*)\s*%/,
-    /TASA\s+DE\s+INTER[ÉE]S\s*:?\s*([\d]+\.?\d*)\s*%/,
-    /TASA\s+ANUAL\s*:?\s*([\d]+\.?\d*)\s*%/,
-    /T\.?I\.?A\.?\s*:?\s*([\d]+\.?\d*)\s*%/,
-    /INTER[ÉE]S\s+MENSUAL\s*:?\s*([\d]+\.?\d*)\s*%/, // fallback: monthly × 12
-  ]);
-
-  /* Determine if rate found is monthly (multiply by 12) */
-  let annualRate = annualRateRaw ? parseFloat(annualRateRaw.replace(/[,%]/g,'')) : null;
-  if(annualRate && annualRateRaw) {
-    try {
-      const ctx = T.match(new RegExp('.{0,30}'+annualRateRaw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'.{0,10}'));
-      if(ctx && /MENSUAL/i.test(ctx[0])) annualRate = annualRate * 12;
-    } catch(e) { /* ignore regex errors */ }
-  }
-
-  /* CAT */
-  const catRaw = tryPat(T, [
-    /CAT\s+PROMEDIO\s*:?\s*([\d]+\.?\d*)\s*%/,
-    /\bCAT\b\s*:?\s*([\d]+\.?\d*)\s*%/,
-    /COSTO\s+ANUAL\s+TOTAL\s*:?\s*([\d]+\.?\d*)\s*%/,
-  ]);
-  const cat = catRaw ? parseFloat(catRaw.replace(/[,%]/g,'')) : null;
-
-  /* Minimum payment */
-  const minPayRaw = tryPat(T, [
-    /PAGO\s+M[ÍI]NIMO\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /M[ÍI]NIMO\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /PAGO\s+PARA\s+NO\s+GENERAR\s+INTERESES\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /PAGO\s+SIN\s+INTERESES\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-  ]);
-
-  /* Due date - extract day number */
+  /* ── Helpers ── */
   function dayFrom(raw){
     if(!raw) return null;
     const m = raw.match(/(\d{1,2})/);
     return m ? parseInt(m[1]) : null;
   }
 
-  const dueDateRaw = tryPat(T, [
+  /* ── 1. Card number ── */
+  const lastFour = tryPat(T,[
+    /(?:\*{4}[\s\-]?){3}(\d{4})/,
+    /(?:X{4}[\s\-]?){3}(\d{4})/,
+    /XXXX[\s\-]?XXXX[\s\-]?XXXX[\s\-]?(\d{4})/,
+    /TERMINACI[OÓ]N\s*:?\s*(\d{4})/,
+    /[ÚU]LTIMOS?\s*(?:4\s*)?D[ÍI]GITOS?\s*:?\s*(\d{4})/,
+    /N[UÚ]MERO\s+DE\s+TARJETA[^0-9]*(\d{4})(?:\D|$)/,
+    /TARJETA[^0-9]*(\d{4})(?:\D|$)/,
+  ]);
+
+  /* ── 2. Balance / Deuda ── */
+  const balanceRaw = nearLabel(lines,[
+    /SALDO\s+TOTAL\s+A\s+PAGAR/,
+    /TOTAL\s+A\s+PAGAR/,
+    /PAGO\s+TOTAL/,
+    /SALDO\s+AL\s+CORTE/,
+    /SALDO\s+DEUDOR/,
+    /NUEVO\s+SALDO/,
+    /SALDO\s+ACTUAL/,
+    /SALDO\s+FINAL/,
+    /SALDO\s+A\s+PAGAR/,
+    /IMPORTE\s+(?:DEL\s+ESTADO|A\s+PAGAR|TOTAL)/,
+    /DEUDA\s+TOTAL/,
+    /SALDO\s+(?:DE\s+TU\s+)?(?:TARJETA|CUENTA|ESTADO)/,
+    /TU\s+SALDO/,
+    /MONTO\s+A\s+PAGAR/,
+    /MONTO\s+TOTAL/,
+  ]) || tryPat(T,[
+    /SALDO\s+TOTAL\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /TOTAL\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /PAGO\s+TOTAL\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /SALDO\s+AL\s+CORTE\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /SALDO\s+DEUDOR\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /NUEVO\s+SALDO\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /SALDO\s+ACTUAL\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /IMPORTE\s+DEL\s+ESTADO\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+  ]);
+
+  /* ── 3. Limit ── */
+  const limitRaw = nearLabel(lines,[
+    /L[ÍI]NEA\s+DE\s+CR[ÉE]DITO/,
+    /L[ÍI]MITE\s+(?:DE\s+)?CR[ÉE]DITO/,
+    /CR[ÉE]DITO\s+TOTAL/,
+    /L[ÍI]MITE\s+AUTORIZADO/,
+    /CR[ÉE]DITO\s+ASIGNADO/,
+    /LINEA\s+AUTORIZADA/,
+    /L[ÍI]MITE\s+(?:DE\s+TU\s+)?TARJETA/,
+    /CR[ÉE]DITO\s+OTORGADO/,
+  ]) || tryPat(T,[
+    /L[ÍI]NEA\s+DE\s+CR[ÉE]DITO\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /L[ÍI]MITE\s+(?:DE\s+)?CR[ÉE]DITO\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /CR[ÉE]DITO\s+TOTAL\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+  ]);
+
+  /* ── 4. Available credit ── */
+  const availableRaw = nearLabel(lines,[
+    /CR[ÉE]DITO\s+DISPONIBLE/,
+    /DISPONIBLE\s*(?:AL\s+CORTE)?/,
+    /SALDO\s+DISPONIBLE/,
+    /CR[ÉE]DITO\s+RESTANTE/,
+    /DISPONIBILIDAD/,
+  ]) || tryPat(T,[
+    /CR[ÉE]DITO\s+DISPONIBLE\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /DISPONIBLE\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /SALDO\s+DISPONIBLE\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+  ]);
+
+  /* ── 5. Balance fallback: limit − available ── */
+  let balance = parseAmt(balanceRaw);
+  const creditLimit = parseAmt(limitRaw);
+  const available   = parseAmt(availableRaw);
+  if(balance===null && creditLimit!==null && available!==null){
+    balance = Math.max(0, creditLimit - available);
+  }
+  // Additional fallback: if available > limit (data confusion), swap
+  if(balance!==null && creditLimit!==null && balance > creditLimit * 1.1){
+    balance = null; // reject implausible value
+  }
+
+  /* ── 6. Annual interest rate ── */
+  let annualRateRaw = nearLabelPct(lines,[
+    /TASA\s+(?:DE\s+)?INTER[ÉE]S\s+ANUAL\s+ORDINARIA/,
+    /TASA\s+(?:DE\s+)?INTER[ÉE]S\s+ANUAL/,
+    /TASA\s+ANUAL\s+(?:DE\s+)?INTER[ÉE]S/,
+    /INTER[ÉE]S\s+ANUAL/,
+    /TASA\s+ANUAL/,
+    /T\.?I\.?A\.?/,
+  ]) || tryPat(T,[
+    /TASA\s+(?:DE\s+)?INTER[ÉE]S\s+ANUAL\s+ORDINARIA[^%\d]*([\d]+\.?\d*)\s*%/,
+    /TASA\s+(?:DE\s+)?INTER[ÉE]S\s+ANUAL[^%\d]*([\d]+\.?\d*)\s*%/,
+    /INTER[ÉE]S\s+ANUAL\s*:?\s*([\d]+\.?\d*)\s*%/,
+    /TASA\s+ANUAL\s*:?\s*([\d]+\.?\d*)\s*%/,
+    /T\.?I\.?A\.?\s*:?\s*([\d]+\.?\d*)\s*%/,
+  ]);
+
+  // Monthly rate → annualize
+  let isMensual = false;
+  if(!annualRateRaw){
+    annualRateRaw = nearLabelPct(lines,[/INTER[ÉE]S\s+MENSUAL/,/TASA\s+MENSUAL/])
+      || tryPat(T,[/INTER[ÉE]S\s+MENSUAL\s*:?\s*([\d]+\.?\d*)\s*%/,/TASA\s+MENSUAL\s*:?\s*([\d]+\.?\d*)\s*%/]);
+    if(annualRateRaw) isMensual = true;
+  }
+
+  let annualRate = annualRateRaw ? parseFloat(annualRateRaw.replace(/[,%]/g,'')) : null;
+  if(annualRate && isMensual) annualRate = annualRate * 12;
+  // Sanity check: annual rate should be between 1% and 200%
+  if(annualRate!==null && (annualRate<1 || annualRate>200)) annualRate = null;
+
+  // Bank-specific rate defaults if still not found
+  if(annualRate===null){
+    const rateDefaults={bbva:55,citi:58,sant:53,hsbc:57,banorte:51,scotia:55,amex:48,nu:45,inbursa:36};
+    annualRate = rateDefaults[bankInfo.id] || null;
+  }
+
+  /* ── 7. CAT ── */
+  let catRaw = nearLabelPct(lines,[
+    /CAT\s+PROMEDIO/,
+    /\bCAT\b/,
+    /COSTO\s+ANUAL\s+TOTAL/,
+  ]) || tryPat(T,[
+    /CAT\s+PROMEDIO\s*:?\s*([\d]+\.?\d*)\s*%/,
+    /\bCAT\b\s*:?\s*([\d]+\.?\d*)\s*%/,
+    /COSTO\s+ANUAL\s+TOTAL\s*:?\s*([\d]+\.?\d*)\s*%/,
+  ]);
+  let cat = catRaw ? parseFloat(catRaw.replace(/[,%]/g,'')) : null;
+  if(cat!==null && (cat<1||cat>500)) cat=null;
+  // CAT fallback from bank defaults
+  if(cat===null){
+    const catDef={bbva:72,citi:74,sant:69,hsbc:73,banorte:67,scotia:71,amex:62,nu:58,inbursa:46};
+    cat = catDef[bankInfo.id]||null;
+  }
+
+  /* ── 8. Minimum payment ── */
+  const minPayRaw = nearLabel(lines,[
+    /PAGO\s+M[ÍI]NIMO/,
+    /M[ÍI]NIMO\s+A\s+PAGAR/,
+    /PAGO\s+PARA\s+NO\s+GENERAR\s+INTERESES/,
+    /PAGO\s+SIN\s+INTERESES/,
+    /PAGO\s+M[ÍI]NIMO\s+REQUERIDO/,
+    /IMPORTE\s+M[ÍI]NIMO/,
+  ]) || tryPat(T,[
+    /PAGO\s+M[ÍI]NIMO\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /M[ÍI]NIMO\s+A\s+PAGAR\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+    /PAGO\s+PARA\s+NO\s+GENERAR\s+INTERESES\s*:?\s*\$?\s*([\d,]+\.?\d*)/,
+  ]);
+
+  // Minimum fallback: 3% of balance (Mexican regulation minimum)
+  let minPayment = parseAmt(minPayRaw);
+  if(minPayment===null && balance!==null) minPayment = Math.max(200, balance * 0.03);
+
+  /* ── 9. Dates ── */
+  const dueDateRaw = tryPat(T,[
     /FECHA\s+L[ÍI]MITE\s+(?:DE\s+)?PAGO\s*:?\s*(\d{1,2}[^\n]{0,25})/,
     /FECHA\s+M[ÁA]XIMA\s+(?:DE\s+)?PAGO\s*:?\s*(\d{1,2}[^\n]{0,25})/,
     /FECHA\s+DE\s+VENCIMIENTO\s*:?\s*(\d{1,2}[^\n]{0,25})/,
@@ -1848,40 +1975,37 @@ function parseStatement(rawText){
     /D[ÍI]A\s+(?:DE\s+)?PAGO\s*:?\s*(\d{1,2})/,
   ]);
 
-  const cutDateRaw = tryPat(T, [
+  const cutDateRaw = tryPat(T,[
     /FECHA\s+(?:DE\s+)?CORTE\s*:?\s*(\d{1,2}[^\n]{0,25})/,
     /FECHA\s+DE\s+CIERRE\s*:?\s*(\d{1,2}[^\n]{0,25})/,
     /D[ÍI]A\s+(?:DE\s+)?CORTE\s*:?\s*(\d{1,2})/,
   ]);
 
-  /* Available credit */
-  const availableRaw = tryPat(T, [
-    /CR[ÉE]DITO\s+DISPONIBLE\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /DISPONIBLE\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-    /SALDO\s+DISPONIBLE\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})/,
-  ]);
-
-  /* Transactions */
+  /* ── 10. Transactions ── */
   const transactions = extractTxFromText(rawText);
 
-  /* Confidence score */
-  const fieldsFound = [balanceRaw, limitRaw, annualRateRaw, catRaw, minPayRaw].filter(Boolean).length;
-  const confidence = fieldsFound >= 4 ? 'hi' : fieldsFound >= 2 ? 'md' : 'lo';
-  const confLabel  = fieldsFound >= 4 ? 'Alta precisión' : fieldsFound >= 2 ? 'Precisión media' : 'Precisión baja';
+  /* ── 11. Confidence ── */
+  const foundFields = [
+    balanceRaw||balance, limitRaw, annualRateRaw, catRaw, minPayRaw
+  ].filter(Boolean).length;
+  const confidence = foundFields>=4?'hi':foundFields>=2?'md':'lo';
+  const confLabel  = foundFields>=4?'Alta precisión':foundFields>=2?'Precisión media':'Precisión baja';
 
   return {
     bankInfo, lastFour,
-    balance:     parseAmt(balanceRaw),
-    creditLimit: parseAmt(limitRaw),
-    available:   parseAmt(availableRaw),
+    balance,
+    creditLimit,
+    available,
     annualRate,
     cat,
-    minPayment:  parseAmt(minPayRaw),
-    dueDay:      dayFrom(dueDateRaw),
-    cutDay:      dayFrom(cutDateRaw),
+    minPayment,
+    dueDay:  dayFrom(dueDateRaw),
+    cutDay:  dayFrom(cutDateRaw),
     transactions,
     confidence, confLabel,
-    fieldsFound,
+    fieldsFound: foundFields,
+    // debug info
+    _raw: { balanceRaw, limitRaw, availableRaw, annualRateRaw, catRaw, minPayRaw },
   };
 }
 
