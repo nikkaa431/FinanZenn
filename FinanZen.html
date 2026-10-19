@@ -484,6 +484,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-tip strong{color:var(--t)}
 .plan-empty{text-align:center;padding:30px 20px;color:var(--m);font-size:13px}
 
+/* ===== v1.5: equivalencia en otra moneda ===== */
+.bal-alt{color:rgba(255,255,255,.88);font-size:14px;font-weight:600;margin-top:6px}
+.bal-alt:empty,.sc-alt:empty,.amt-alt:empty{display:none}
+.sc-alt{font-size:11px;color:var(--m);margin-top:3px;font-weight:600}
+.amt-alt{text-align:center;font-size:13px;font-weight:600;color:var(--m);margin:-8px 0 14px}
 /* ===== v1.4: edición, modo oscuro ===== */
 .tx{cursor:pointer}
 .dbtn{width:100%;margin-top:10px;padding:14px;border:none;border-radius:14px;background:var(--rbg);color:var(--r);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
@@ -512,6 +517,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="bal-section">
     <div class="bal-lbl">Balance del mes</div>
     <div class="bal-amt"><span class="bal-cur" id="balCur">$</span><span id="balAmt">0.00</span></div>
+    <div class="bal-alt" id="balAlt"></div>
     <div class="bal-sub" id="balSub">Sin movimientos este mes</div>
   </div>
 </div>
@@ -521,10 +527,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sc inc">
     <div class="sc-lbl"><i>↑</i> Ingresos</div>
     <div class="sc-amt" id="totalInc">$0</div>
+    <div class="sc-alt" id="incAlt"></div>
   </div>
   <div class="sc exp">
     <div class="sc-lbl"><i>↓</i> Gastos</div>
     <div class="sc-amt" id="totalExp">$0</div>
+    <div class="sc-alt" id="expAlt"></div>
   </div>
 </div>
 
@@ -602,7 +610,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="set-card">
       <div class="si" onclick="openCurrencyModal()">
         <div class="sico">💱</div>
-        <div class="sinfo"><div class="slbl">Moneda</div><div class="sval" id="curValLbl">🇲🇽 Peso mexicano (MXN)</div></div>
+        <div class="sinfo"><div class="slbl">Moneda principal</div><div class="sval" id="curValLbl">🇲🇽 Peso mexicano (MXN)</div></div>
+        <span class="sarr">›</span>
+      </div>
+      <div class="si" onclick="openCurrencyModal('alt')">
+        <div class="sico">🔁</div>
+        <div class="sinfo"><div class="slbl">Ver equivalente en</div><div class="sval" id="altValLbl">Desactivado</div></div>
         <span class="sarr">›</span>
       </div>
     </div>
@@ -645,7 +658,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      FinanZen v1.4 · Datos guardados localmente
+      FinanZen v1.5 · Datos guardados localmente<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -762,8 +775,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <!-- AMOUNT -->
     <div class="amtwrap">
-      <span class="amtpre" id="amtCurSym">$</span><input class="amtinp" id="amtInp" type="number" placeholder="0.00" min="0" step="0.01">
+      <span class="amtpre" id="amtCurSym">$</span><input class="amtinp" id="amtInp" type="number" placeholder="0.00" min="0" step="0.01" oninput="updateAmtAlt()">
     </div>
+    <div class="amt-alt" id="amtAlt"></div>
     <!-- CATEGORIES -->
     <label class="flbl">Categoría</label>
     <div class="cats-scroll" id="catScroll">
@@ -785,7 +799,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="ov" id="curOv" onclick="closeModal(event,'curOv')">
   <div class="modal">
     <div class="mhandle"></div>
-    <div class="mtitle">Seleccionar moneda</div>
+    <div class="mtitle" id="curModalTitle">Seleccionar moneda</div>
     <div id="currencyList"></div>
   </div>
 </div>
@@ -1148,6 +1162,7 @@ function render(){
       : 'Sin movimientos este mes';
   document.getElementById('totalInc').textContent = fmt(inc);
   document.getElementById('totalExp').textContent = fmt(exp);
+  renderAltEq(bal, inc, exp);
 
   // Tip
   const tipEl = document.getElementById('tipBar');
@@ -1462,6 +1477,7 @@ function renderSettingsProfile(){
   document.getElementById('profSub').textContent = `${transactions.length} movimiento${transactions.length!==1?'s':''} registrado${transactions.length!==1?'s':''}`;
   document.getElementById('curValLbl').textContent = prefs.curName;
   renderBackupLbl();
+  renderAltLbl();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1478,6 +1494,7 @@ function openAddModal(){
   document.getElementById('dateInp').value=todayISO();
   document.getElementById('amtCurSym').textContent=sym();
   setType('e',true);
+  updateAmtAlt();
   document.getElementById('addOv').classList.add('on');
   setTimeout(()=>document.getElementById('amtInp').focus(),400);
 }
@@ -1572,24 +1589,45 @@ function goPage(key){
 // ══════════════════════════════════════════════════════
 //  CURRENCY MODAL
 // ══════════════════════════════════════════════════════
-function openCurrencyModal(){
-  const list=document.getElementById('currencyList');
-  list.innerHTML=CURRENCIES.map(c=>`
-    <div class="cur-opt${c.code===prefs.cur?' sel':''}" onclick="setCurrency('${c.code}','${c.sym}','${c.flag} ${c.name} (${c.code})')">
-      <span class="curflag">${c.flag}</span>
-      <div class="curinfo"><div class="curname">${c.name}</div><div class="curcode">${c.code} · ${c.sym}</div></div>
+let curModalMode = 'main';
+
+function openCurrencyModal(mode){
+  curModalMode = mode==='alt' ? 'alt' : 'main';
+  const isAlt = curModalMode==='alt';
+  const selCode = isAlt ? prefs.alt : prefs.cur;
+  document.getElementById('curModalTitle').textContent = isAlt ? 'Ver equivalente en' : 'Moneda principal';
+  const opt = (sel, flag, name, sub, onclick) => `
+    <div class="cur-opt${sel?' sel':''}" onclick="${onclick}">
+      <span class="curflag">${flag}</span>
+      <div class="curinfo"><div class="curname">${name}</div><div class="curcode">${sub}</div></div>
       <span class="curcheck">✓</span>
-    </div>`
-  ).join('');
+    </div>`;
+  const none = isAlt ? opt(!prefs.alt, '🚫', 'Ninguna', 'No mostrar equivalencia', 'setAltCurrency(null)') : '';
+  document.getElementById('currencyList').innerHTML = none + CURRENCIES
+    .filter(c => !isAlt || rateCode(c.code)!==rateCode(prefs.cur))
+    .map(c => opt(c.code===selCode, c.flag, c.name, `${c.code} · ${c.sym}`,
+      isAlt ? `setAltCurrency('${c.code}')` : `setCurrency('${c.code}','${c.sym}','${c.flag} ${c.name} (${c.code})')`))
+    .join('');
   document.getElementById('curOv').classList.add('on');
 }
 
 function setCurrency(code,sym,name){
-  prefs={cur:code,sym,curName:name};
+  prefs = {...prefs, cur:code, sym, curName:name};
+  if(prefs.alt && rateCode(prefs.alt)===rateCode(code)) prefs.alt = null;
   savePrefs();
   document.getElementById('curOv').classList.remove('on');
   render();
+  ensureRates();
   showToast('💱 Moneda actualizada');
+}
+
+function setAltCurrency(code){
+  prefs = {...prefs, alt:code};
+  savePrefs();
+  document.getElementById('curOv').classList.remove('on');
+  render();
+  ensureRates();
+  showToast(code ? `🔁 Equivalencia en ${rateCode(code)}` : '🔁 Equivalencia desactivada');
 }
 
 // ══════════════════════════════════════════════════════
@@ -3024,6 +3062,7 @@ function openEditTx(id){
   document.getElementById('dateInp').value = t.date;
   document.getElementById('amtCurSym').textContent = sym();
   setAddModalMode(true);
+  updateAmtAlt();
   document.getElementById('addOv').classList.add('on');
 }
 
@@ -3141,7 +3180,8 @@ function sanitizeBackup(d){
     }));
 
   const cur = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.cur);
-  out.prefs = cur ? {cur:cur.code, sym:cur.sym, curName:`${cur.flag} ${cur.name} (${cur.code})`} : null;
+  const alt = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.alt);
+  out.prefs = cur ? {cur:cur.code, sym:cur.sym, curName:`${cur.flag} ${cur.name} (${cur.code})`, alt: alt ? alt.code : null} : null;
   return out;
 }
 
@@ -3189,6 +3229,79 @@ try{
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
   window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
+
+
+// ══════════════════════════════════════════════════════
+//  v1.5 — EQUIVALENCIA EN OTRA MONEDA (tipo de cambio automático)
+// ══════════════════════════════════════════════════════
+const FX_KEY = 'finanzenfx_v1';
+let fx = (()=>{ try{ return JSON.parse(localStorage.getItem(FX_KEY)||'null'); }catch(e){ return null; } })();
+let fxLoading = false;
+
+function rateCode(c){ return c==='USD-EC' ? 'USD' : c; }
+function curInfo(code){ return CURRENCIES.find(c=>c.code===code); }
+
+// Cuánto vale 1 unidad de la moneda principal en la moneda de equivalencia
+function fxRate(){
+  if(!prefs.alt || !fx || !fx.rates) return null;
+  const a = fx.rates[rateCode(prefs.cur)], b = fx.rates[rateCode(prefs.alt)];
+  return (a>0 && b>0) ? b/a : null;
+}
+
+function altEq(n){
+  const r = fxRate(), c = curInfo(prefs.alt);
+  if(r==null || !c) return '';
+  return `≈ ${c.sym}${num2(Math.abs(n)*r)} ${rateCode(c.code)}`;
+}
+
+function renderAltEq(bal, inc, exp){
+  document.getElementById('balAlt').textContent = (bal||inc||exp) ? altEq(bal) : '';
+  document.getElementById('incAlt').textContent = inc ? altEq(inc) : '';
+  document.getElementById('expAlt').textContent = exp ? altEq(exp) : '';
+}
+
+function updateAmtAlt(){
+  const v = parseFloat(document.getElementById('amtInp').value);
+  document.getElementById('amtAlt').textContent = v>0 ? altEq(v) : '';
+}
+
+function renderAltLbl(){
+  const el = document.getElementById('altValLbl');
+  if(!el) return;
+  if(!prefs.alt){ el.textContent = 'Desactivado'; return; }
+  const c = curInfo(prefs.alt), r = fxRate();
+  let info;
+  if(r!=null){
+    const fmtR = x => x.toLocaleString('es-MX', {maximumFractionDigits: x>=100 ? 2 : 4});
+    info = r>=1 ? `1 ${rateCode(prefs.cur)} = ${fmtR(r)} ${rateCode(c.code)}`
+                : `1 ${rateCode(c.code)} = ${fmtR(1/r)} ${rateCode(prefs.cur)}`;
+    if(fx.updated) info += ' · ' + new Date(fx.updated).toLocaleDateString('es-MX', {day:'numeric', month:'short'});
+  } else {
+    info = fxLoading ? 'actualizando tipo de cambio…' : 'sin tipo de cambio (requiere internet)';
+  }
+  el.textContent = `${c ? c.flag+' '+c.name : prefs.alt} · ${info}`;
+}
+
+async function ensureRates(force){
+  if(!prefs.alt || fxLoading) return;
+  const base = rateCode(prefs.cur);
+  const fresh = fx && fx.base===base && (Date.now()-(fx.fetched||0)) < 6*3600*1000;
+  if((fresh && !force) || navigator.onLine===false) return;
+  fxLoading = true; renderAltLbl();
+  try{
+    const res = await fetch(`https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`);
+    const j = await res.json();
+    if(j && j.result==='success' && j.rates){
+      fx = {base, rates:j.rates, updated:(j.time_last_update_unix||0)*1000, fetched:Date.now()};
+      try{ localStorage.setItem(FX_KEY, JSON.stringify(fx)); }catch(e){}
+    }
+  }catch(e){ /* sin internet: se usa el último tipo de cambio guardado */ }
+  fxLoading = false;
+  render();
+}
+
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') ensureRates(); });
+ensureRates();
 
 setType('e',true);
 render();
