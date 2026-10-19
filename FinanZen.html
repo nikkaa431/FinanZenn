@@ -485,6 +485,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-empty{text-align:center;padding:30px 20px;color:var(--m);font-size:13px}
 
 /* ===== v1.6: ingreso semanal/quincenal/mensual ===== */
+.bal-total{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(255,255,255,.18);color:#fff;border-radius:50px;padding:6px 13px;font-size:12px;font-weight:700}
+.bal-total:empty{display:none}
 .ri-amt.inc{color:var(--g)}
 .rst-val.rv-left{color:var(--p)}
 .rst-val.rv-left.neg{color:var(--r)}
@@ -527,6 +529,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="bal-amt"><span class="bal-cur" id="balCur">$</span><span id="balAmt">0.00</span></div>
     <div class="bal-alt" id="balAlt"></div>
     <div class="bal-sub" id="balSub">Sin movimientos este mes</div>
+    <div class="bal-total" id="balTotal"></div>
   </div>
 </div>
 
@@ -675,7 +678,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      FinanZen v1.6 · Datos guardados localmente<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
+      FinanZen v1.7 · Datos guardados localmente<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -1030,6 +1033,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <label class="flbl" id="incDayLbl">Día de pago</label>
     <div class="day-grid" id="incDayGrid"></div>
+    <label class="flbl">Contar pagos desde</label>
+    <input class="finp" id="incSince" type="date" onchange="updateIncPreview()">
     <div class="inc-preview" id="incPreview"></div>
     <button class="sbtn" onclick="saveIncome()">Guardar ingreso</button>
     <button class="dbtn" id="incDelBtn" onclick="removeIncome()" style="display:none">Quitar ingreso</button>
@@ -1206,6 +1211,7 @@ function render(){
   document.getElementById('totalInc').textContent = fmt(inc);
   document.getElementById('totalExp').textContent = fmt(exp);
   renderAltEq(bal, inc, exp);
+  renderTotalBalance();
 
   // Tip
   const tipEl = document.getElementById('tipBar');
@@ -3229,7 +3235,8 @@ function sanitizeBackup(d){
   const inc = d.income;
   out.income = (inc && typeof inc==='object' && numOr(inc.amt,0)>0 && ['w','q','m'].includes(inc.freq))
     ? {name: str(inc.name,40)||'Sueldo', amt: numOr(inc.amt,0), freq: inc.freq,
-       wday: intIn(inc.wday,0,6) ?? 5, day: intIn(inc.day,1,31) || 1}
+       wday: intIn(inc.wday,0,6) ?? 5, day: intIn(inc.day,1,31) || 1,
+       since: /^\d{4}-\d{2}-\d{2}$/.test(inc.since) ? inc.since : null}
     : null;
   const alt = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.alt);
   out.prefs = cur ? {cur:cur.code, sym:cur.sym, curName:`${cur.flag} ${cur.name} (${cur.code})`, alt: alt ? alt.code : null} : null;
@@ -3301,13 +3308,35 @@ function paydays(y, m, cfg){
   cfg = cfg || income;
   if(!cfg) return [];
   const last = new Date(y, m+1, 0).getDate();
+  let out;
   if(cfg.freq==='w'){
-    const out = [];
+    out = [];
     for(let d=1; d<=last; d++) if(new Date(y,m,d).getDay()===cfg.wday) out.push(isoOf(y,m,d));
-    return out;
-  }
-  if(cfg.freq==='q') return [isoOf(y,m,15), isoOf(y,m,last)];
-  return [isoOf(y,m,Math.min(cfg.day||1,last))];
+  } else if(cfg.freq==='q') out = [isoOf(y,m,15), isoOf(y,m,last)];
+  else out = [isoOf(y,m,Math.min(cfg.day||1,last))];
+  // Los pagos anteriores a "contar desde" ya están incluidos en tu saldo
+  return cfg.since ? out.filter(d => d >= cfg.since) : out;
+}
+
+function shortDate(iso){
+  const d = new Date(iso+'T00:00:00');
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+}
+
+// Saldo acumulado: todos los movimientos hasta el último día del mes indicado
+function totalBalanceUpTo(y, m){
+  const lastISO = isoOf(y, m, new Date(y, m+1, 0).getDate());
+  return transactions.reduce((a,t)=> t.date<=lastISO ? a + (t.type==='i' ? t.amt : -t.amt) : a, 0);
+}
+
+function renderTotalBalance(){
+  const el = document.getElementById('balTotal');
+  if(!transactions.length){ el.textContent=''; return; }
+  const y = viewDate.y, m = viewDate.m;
+  const tot = totalBalanceUpTo(y, m);
+  const now = new Date();
+  const past = y < now.getFullYear() || (y===now.getFullYear() && m < now.getMonth());
+  el.textContent = `💰 Saldo total${past ? ' al cierre de '+MONTHS_ES[m] : ''}: ${tot<0?'-':''}${fmtFull(tot)}`;
 }
 
 function monthlyAvg(cfg){
@@ -3366,10 +3395,10 @@ function renderIncomeSection(txs){
   }).join('');
 
   // Te queda = ingresos del mes (cobrados + por cobrar) − gastos del mes − gastos fijos pendientes
-  const incTx  = txs.filter(t=>t.type==='i').reduce((a,t)=>a+t.amt,0);
-  const expTx  = txs.filter(t=>t.type==='e').reduce((a,t)=>a+t.amt,0);
   const recurPend = recurring.filter(r=>!getRecurTx(r.id,y,m)).reduce((a,r)=>a+r.amt,0);
-  const left = incTx + pendingPay - expTx - recurPend;
+  const left = totalBalanceUpTo(y, m) + pendingPay - recurPend;
+  const sinceNote = (income.since && income.since.slice(0,7)===isoOf(y,m,1).slice(0,7))
+    ? ` Los pagos antes del ${shortDate(income.since)} no se cuentan porque ya están en tu saldo.` : '';
 
   el.innerHTML = `<div class="recur-card">
     <div class="recur-hdr">
@@ -3381,8 +3410,8 @@ function renderIncomeSection(txs){
       <div class="rst"><div class="rst-lbl">Cobrado</div><div class="rst-val rv-paid">${fmt(received)}</div></div>
       <div class="rst"><div class="rst-lbl">Te queda</div><div class="rst-val rv-left${left<0?' neg':''}">${left<0?'-':''}${fmt(Math.abs(left))}</div></div>
     </div>
-    <div class="inc-note">“Te queda” = ingresos del mes (cobrados y por cobrar) − gastos registrados − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.</div>
-    ${items}
+    <div class="inc-note">“Te queda” = tu saldo total + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}</div>
+    ${items || `<div class="recur-empty">Tus pagos empiezan a contar desde el ${shortDate(income.since)}.</div>`}
   </div>`;
 }
 
@@ -3415,7 +3444,7 @@ function renderIncomeCard(){
   el.innerHTML = `<div class="si" onclick="openIncomeModal()">
       <div class="sico">💵</div>
       <div class="sinfo"><div class="slbl">${esc(income.name)} · ${fmtFull(income.amt)} ${FREQ_LBL[income.freq]}</div>
-        <div class="sval">${freqDesc(income)} · ≈ ${fmtFull(monthlyAvg())}/mes</div></div>
+        <div class="sval">${freqDesc(income)} · ≈ ${fmtFull(monthlyAvg())}/mes${income.since?' · desde '+shortDate(income.since):''}</div></div>
       <span class="sarr">›</span>
     </div>`;
 }
@@ -3424,7 +3453,8 @@ function renderIncomeCard(){
 let incDraft = null;
 
 function openIncomeModal(){
-  incDraft = income ? {...income} : {name:'Sueldo', amt:0, freq:'w', wday:5, day:1};
+  incDraft = income ? {...income} : {name:'Sueldo', amt:0, freq:'w', wday:5, day:1, since:todayISO()};
+  document.getElementById('incSince').value = incDraft.since || '';
   document.getElementById('incName').value = incDraft.name;
   document.getElementById('incAmt').value  = incDraft.amt || '';
   document.getElementById('incCurSym').textContent = sym();
@@ -3467,10 +3497,10 @@ function updateIncPreview(){
   const amt = parseFloat(document.getElementById('incAmt').value) || 0;
   const el = document.getElementById('incPreview');
   if(!amt){ el.textContent = ''; return; }
-  const cfg = {...incDraft, amt};
+  const since = document.getElementById('incSince').value || null;
+  const cfg = {...incDraft, amt, since};
   const n = paydays(viewDate.y, viewDate.m, cfg).length;
-  el.textContent = `≈ ${fmtFull(monthlyAvg(cfg))} al mes en promedio` +
-    (cfg.freq==='w' ? ` · ${MONTHS_ES[viewDate.m]} tiene ${n} pagos` : '');
+  el.textContent = `≈ ${fmtFull(monthlyAvg(cfg))} al mes en promedio · en ${MONTHS_ES[viewDate.m]} cuenta${n!==1?'n':''} ${n} pago${n!==1?'s':''}`;
 }
 
 function saveIncome(){
@@ -3478,7 +3508,8 @@ function saveIncome(){
   if(!amt || amt<=0){ showToast('⚠️ Ingresa el monto de cada pago'); return; }
   income = {
     name: document.getElementById('incName').value.trim() || 'Sueldo',
-    amt, freq: incDraft.freq, wday: incDraft.wday, day: incDraft.day
+    amt, freq: incDraft.freq, wday: incDraft.wday, day: incDraft.day,
+    since: /^\d{4}-\d{2}-\d{2}$/.test(document.getElementById('incSince').value) ? document.getElementById('incSince').value : null
   };
   saveInc();
   document.getElementById('incOv').classList.remove('on');
