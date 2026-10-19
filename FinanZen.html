@@ -484,6 +484,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-tip strong{color:var(--t)}
 .plan-empty{text-align:center;padding:30px 20px;color:var(--m);font-size:13px}
 
+/* ===== v1.6: ingreso semanal/quincenal/mensual ===== */
+.ri-amt.inc{color:var(--g)}
+.rst-val.rv-left{color:var(--p)}
+.rst-val.rv-left.neg{color:var(--r)}
+.recur-item.is-future{opacity:.65}
+.inc-note{font-size:11px;color:var(--m);padding:9px 16px;border-bottom:1px solid var(--b);line-height:1.4}
+.inc-preview{font-size:13px;color:var(--m);text-align:center;margin:-4px 0 14px;font-weight:600}
+.inc-preview:empty{display:none}
 /* ===== v1.5: equivalencia en otra moneda ===== */
 .bal-alt{color:rgba(255,255,255,.88);font-size:14px;font-weight:600;margin-top:6px}
 .bal-alt:empty,.sc-alt:empty,.amt-alt:empty{display:none}
@@ -545,6 +553,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <span>💡</span>
       <span id="tipTxt">Toca el botón <b>+</b> para registrar tu primer movimiento.</span>
     </div>
+    <!-- INGRESOS DEL MES -->
+    <div class="sec-hdr" style="margin-top:4px">
+      <span class="sec-title">💵 Mis ingresos del mes</span>
+    </div>
+    <div id="incomeSection"></div>
+
     <!-- GASTOS FIJOS DEL MES -->
     <div class="sec-hdr" style="margin-top:4px">
       <span class="sec-title">🔄 Gastos fijos del mes</span>
@@ -620,6 +634,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
 
+    <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Mi ingreso</div>
+    <div class="set-card" id="incomeCard"></div>
+
     <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Gastos fijos / recurrentes</div>
     <div class="set-card" id="recurManageCard">
       <div class="no-budget">No hay gastos fijos configurados</div>
@@ -658,7 +675,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      FinanZen v1.5 · Datos guardados localmente<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
+      FinanZen v1.6 · Datos guardados localmente<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -993,6 +1010,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <!-- ===== BUDGET MODAL ===== -->
+<!-- ===== INCOME MODAL ===== -->
+<div class="ov" id="incOv" onclick="closeModal(event,'incOv')">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">💵 Mi ingreso</div>
+    <label class="flbl">Nombre</label>
+    <input class="finp" id="incName" type="text" placeholder="Ej: Sueldo" maxlength="40">
+    <label class="flbl">Monto de cada pago</label>
+    <div class="amtwrap" style="margin-bottom:16px;padding:10px 0">
+      <span class="amtpre" id="incCurSym">$</span>
+      <input class="amtinp" id="incAmt" type="number" placeholder="0.00" min="0" step="0.01" style="font-size:38px" oninput="updateIncPreview()">
+    </div>
+    <label class="flbl">¿Cada cuándo te pagan?</label>
+    <div class="ttog">
+      <button class="tbtn" id="incF_w" onclick="setIncFreq('w')">Semanal</button>
+      <button class="tbtn" id="incF_q" onclick="setIncFreq('q')">Quincenal</button>
+      <button class="tbtn" id="incF_m" onclick="setIncFreq('m')">Mensual</button>
+    </div>
+    <label class="flbl" id="incDayLbl">Día de pago</label>
+    <div class="day-grid" id="incDayGrid"></div>
+    <div class="inc-preview" id="incPreview"></div>
+    <button class="sbtn" onclick="saveIncome()">Guardar ingreso</button>
+    <button class="dbtn" id="incDelBtn" onclick="removeIncome()" style="display:none">Quitar ingreso</button>
+  </div>
+</div>
+
 <div class="ov" id="budOv" onclick="closeModal(event,'budOv')">
   <div class="modal">
     <div class="mhandle"></div>
@@ -1186,6 +1229,7 @@ function render(){
   renderStats(txs);
   renderBudgets(txs);
   renderRecurringSection(txs);
+  renderIncomeSection(txs);
   renderRecurManage();
   renderSettingsProfile();
 }
@@ -1476,6 +1520,7 @@ function renderBudgets(txs){
 function renderSettingsProfile(){
   document.getElementById('profSub').textContent = `${transactions.length} movimiento${transactions.length!==1?'s':''} registrado${transactions.length!==1?'s':''}`;
   document.getElementById('curValLbl').textContent = prefs.curName;
+  renderIncomeCard();
   renderBackupLbl();
   renderAltLbl();
 }
@@ -1583,7 +1628,7 @@ function goPage(key){
     document.getElementById(v.ni).classList.toggle('active',k===key);
   });
   if(key==='stats'){ const txs=getMonthTxs(viewDate.y,viewDate.m); renderStats(txs); }
-  if(key==='tdc')  { renderTdcPage(); }
+  if(key==='tdc')  { prefillPlanIncome(); renderTdcPage(); }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1704,8 +1749,8 @@ function confirmClear(){
 }
 
 function clearAllData(){
-  transactions=[]; budgets={}; recurring=[]; creditCards=[];
-  save(); saveBdg(); saveRecur(); saveTdc();
+  transactions=[]; budgets={}; recurring=[]; creditCards=[]; income=null;
+  save(); saveBdg(); saveRecur(); saveTdc(); saveInc();
   render(); showToast('🗑️ Datos borrados');
 }
 
@@ -3101,7 +3146,7 @@ function markBackup(){
 async function exportBackup(){
   const payload = {
     app: 'FinanZen', version: 1, exportedAt: new Date().toISOString(),
-    data: { transactions, budgets, prefs, recurring, creditCards }
+    data: { transactions, budgets, prefs, recurring, creditCards, income }
   };
   const name = `FinanZen_respaldo_${todayISO()}.json`;
   const file = new File([JSON.stringify(payload, null, 1)], name, {type:'application/json'});
@@ -3143,6 +3188,7 @@ function sanitizeBackup(d){
         amt: numOr(t.amt,0), date: t.date, desc: str(t.desc, 200)
       };
       if(t.recurId!=null && SAFE_ID.test(t.recurId)){ o.recurId = t.recurId; o.isRecurring = true; }
+      if(t.isPay && /^\d{4}-\d{2}-\d{2}$/.test(t.payDate)){ o.isPay = true; o.payDate = t.payDate; }
       return o;
     });
 
@@ -3180,6 +3226,11 @@ function sanitizeBackup(d){
     }));
 
   const cur = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.cur);
+  const inc = d.income;
+  out.income = (inc && typeof inc==='object' && numOr(inc.amt,0)>0 && ['w','q','m'].includes(inc.freq))
+    ? {name: str(inc.name,40)||'Sueldo', amt: numOr(inc.amt,0), freq: inc.freq,
+       wday: intIn(inc.wday,0,6) ?? 5, day: intIn(inc.day,1,31) || 1}
+    : null;
   const alt = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.alt);
   out.prefs = cur ? {cur:cur.code, sym:cur.sym, curName:`${cur.flag} ${cur.name} (${cur.code})`, alt: alt ? alt.code : null} : null;
   return out;
@@ -3207,8 +3258,9 @@ function handleRestoreFile(file){
         budgets      = clean.budgets;
         recurring    = clean.recurring;
         creditCards  = clean.creditCards;
+        income       = clean.income;
         if(clean.prefs) prefs = clean.prefs;
-        save(); saveBdg(); saveRecur(); saveTdc(); savePrefs();
+        save(); saveBdg(); saveRecur(); saveTdc(); savePrefs(); saveInc();
         render(); renderTdcPage();
         showToast('✅ Respaldo restaurado');
       });
@@ -3230,6 +3282,224 @@ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hos
   window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
 
+
+// ══════════════════════════════════════════════════════
+//  v1.6 — MI INGRESO (semanal / quincenal / mensual)
+// ══════════════════════════════════════════════════════
+const INCOME_KEY = 'finanzeninc_v1';
+let income = (()=>{ try{ return JSON.parse(localStorage.getItem(INCOME_KEY)||'null'); }catch(e){ return null; } })();
+const saveInc = () => localStorage.setItem(INCOME_KEY, JSON.stringify(income));
+
+const WD_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const WD_LONG  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const FREQ_LBL = {w:'semanal', q:'quincenal', m:'mensual'};
+
+function isoOf(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+// Días de pago dentro de un mes
+function paydays(y, m, cfg){
+  cfg = cfg || income;
+  if(!cfg) return [];
+  const last = new Date(y, m+1, 0).getDate();
+  if(cfg.freq==='w'){
+    const out = [];
+    for(let d=1; d<=last; d++) if(new Date(y,m,d).getDay()===cfg.wday) out.push(isoOf(y,m,d));
+    return out;
+  }
+  if(cfg.freq==='q') return [isoOf(y,m,15), isoOf(y,m,last)];
+  return [isoOf(y,m,Math.min(cfg.day||1,last))];
+}
+
+function monthlyAvg(cfg){
+  cfg = cfg || income;
+  if(!cfg) return 0;
+  return cfg.freq==='w' ? cfg.amt*52/12 : cfg.freq==='q' ? cfg.amt*2 : cfg.amt;
+}
+
+function freqDesc(cfg){
+  if(cfg.freq==='w') return `cada ${WD_LONG[cfg.wday]}`;
+  if(cfg.freq==='q') return 'días 15 y último del mes';
+  return `día ${cfg.day} de cada mes`;
+}
+
+function getPayTx(date){ return transactions.find(t=>t.isPay && t.payDate===date); }
+
+function renderIncomeSection(txs){
+  const el = document.getElementById('incomeSection');
+  if(!income){
+    el.innerHTML = `<div class="recur-card">
+      <div class="recur-hdr">
+        <span class="recur-htitle">💵 Mi ingreso</span>
+        <button class="recur-add-btn" onclick="openIncomeModal()">＋ Configurar</button>
+      </div>
+      <div class="recur-empty">Configura tu sueldo (semanal, quincenal o mensual)<br>para registrar cada pago y ver cuánto te queda en el mes.</div>
+    </div>`;
+    return;
+  }
+  const y = viewDate.y, m = viewDate.m, today = todayISO();
+  const days = paydays(y, m);
+  let expected = 0, received = 0, pendingPay = 0, paidCount = 0;
+
+  const items = days.map(date=>{
+    const tx = getPayTx(date);
+    const amt = tx ? tx.amt : income.amt;
+    expected += amt;
+    if(tx){ received += tx.amt; paidCount++; } else pendingPay += income.amt;
+    const d = new Date(date+'T00:00:00');
+    const lbl = `${WD_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+    const future = !tx && date > today;
+    const sub = tx ? 'Cobrado' : future ? 'Próximo pago' : 'Pendiente de registrar';
+    const right = tx
+      ? `<div class="paid-badge">✓ Cobrado</div><button class="unpay-btn" onclick="unPay('${date}')">deshacer</button>`
+      : `<button class="pay-btn" onclick="markPay('${date}')">Registrar cobro</button>`;
+    return `<div class="recur-item${tx?' is-paid':''}${future?' is-future':''}">
+      <div class="ri-ico" style="background:#00C89622">💵</div>
+      <div class="ri-info">
+        <div class="ri-name">${lbl} · ${esc(income.name)}</div>
+        <div class="ri-sub"><span>${sub}</span></div>
+      </div>
+      <div class="ri-right">
+        <div class="ri-amt inc">+${fmtFull(amt)}</div>
+        ${right}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Te queda = ingresos del mes (cobrados + por cobrar) − gastos del mes − gastos fijos pendientes
+  const incTx  = txs.filter(t=>t.type==='i').reduce((a,t)=>a+t.amt,0);
+  const expTx  = txs.filter(t=>t.type==='e').reduce((a,t)=>a+t.amt,0);
+  const recurPend = recurring.filter(r=>!getRecurTx(r.id,y,m)).reduce((a,r)=>a+r.amt,0);
+  const left = incTx + pendingPay - expTx - recurPend;
+
+  el.innerHTML = `<div class="recur-card">
+    <div class="recur-hdr">
+      <span class="recur-htitle">💵 ${esc(income.name)} <span style="font-size:11px;font-weight:500;color:var(--m);margin-left:4px">${paidCount}/${days.length} cobrados</span></span>
+      <button class="recur-add-btn" onclick="openIncomeModal()">Editar</button>
+    </div>
+    <div class="recur-stats">
+      <div class="rst"><div class="rst-lbl">Esperado</div><div class="rst-val rv-total">${fmt(expected)}</div></div>
+      <div class="rst"><div class="rst-lbl">Cobrado</div><div class="rst-val rv-paid">${fmt(received)}</div></div>
+      <div class="rst"><div class="rst-lbl">Te queda</div><div class="rst-val rv-left${left<0?' neg':''}">${left<0?'-':''}${fmt(Math.abs(left))}</div></div>
+    </div>
+    <div class="inc-note">“Te queda” = ingresos del mes (cobrados y por cobrar) − gastos registrados − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.</div>
+    ${items}
+  </div>`;
+}
+
+function markPay(date){
+  if(!income || getPayTx(date)) return;
+  transactions.unshift({
+    id: newId(), type:'i', cat:'salary', amt: income.amt, date,
+    desc: income.name, isPay: true, payDate: date
+  });
+  save(); render();
+  showToast('💵 Cobro registrado');
+}
+
+function unPay(date){
+  const tx = getPayTx(date);
+  if(!tx) return;
+  transactions = transactions.filter(t=>t.id!==tx.id);
+  save(); render();
+  showToast('↩️ Cobro deshecho');
+}
+
+function renderIncomeCard(){
+  const el = document.getElementById('incomeCard');
+  if(!el) return;
+  if(!income){
+    el.innerHTML = `<div class="no-budget">No has configurado tu ingreso</div>
+      <div class="bnew" onclick="openIncomeModal()"><span>＋</span> Configurar mi ingreso</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="si" onclick="openIncomeModal()">
+      <div class="sico">💵</div>
+      <div class="sinfo"><div class="slbl">${esc(income.name)} · ${fmtFull(income.amt)} ${FREQ_LBL[income.freq]}</div>
+        <div class="sval">${freqDesc(income)} · ≈ ${fmtFull(monthlyAvg())}/mes</div></div>
+      <span class="sarr">›</span>
+    </div>`;
+}
+
+// ── Modal ──
+let incDraft = null;
+
+function openIncomeModal(){
+  incDraft = income ? {...income} : {name:'Sueldo', amt:0, freq:'w', wday:5, day:1};
+  document.getElementById('incName').value = incDraft.name;
+  document.getElementById('incAmt').value  = incDraft.amt || '';
+  document.getElementById('incCurSym').textContent = sym();
+  document.getElementById('incDelBtn').style.display = income ? 'block' : 'none';
+  setIncFreq(incDraft.freq);
+  document.getElementById('incOv').classList.add('on');
+}
+
+function setIncFreq(f){
+  incDraft.freq = f;
+  ['w','q','m'].forEach(k=>document.getElementById('incF_'+k).className = 'tbtn'+(k===f?' on':''));
+  renderIncDayGrid();
+}
+
+function renderIncDayGrid(){
+  const grid = document.getElementById('incDayGrid'), lbl = document.getElementById('incDayLbl');
+  if(incDraft.freq==='w'){
+    lbl.textContent = '¿Qué día te pagan?';
+    grid.style.display = '';
+    grid.innerHTML = [1,2,3,4,5,6,0].map(d=>
+      `<div class="day-btn${d===incDraft.wday?' on':''}" onclick="selIncDay(${d})">${WD_SHORT[d]}</div>`).join('');
+  } else if(incDraft.freq==='q'){
+    lbl.textContent = 'Te pagan los días 15 y el último día de cada mes';
+    grid.style.display = 'none'; grid.innerHTML = '';
+  } else {
+    lbl.textContent = '¿Qué día del mes te pagan?';
+    grid.style.display = '';
+    grid.innerHTML = Array.from({length:31},(_,i)=>i+1).map(d=>
+      `<div class="day-btn${d===incDraft.day?' on':''}" onclick="selIncDay(${d})">${d}</div>`).join('');
+  }
+  updateIncPreview();
+}
+
+function selIncDay(d){
+  if(incDraft.freq==='w') incDraft.wday = d; else incDraft.day = d;
+  renderIncDayGrid();
+}
+
+function updateIncPreview(){
+  const amt = parseFloat(document.getElementById('incAmt').value) || 0;
+  const el = document.getElementById('incPreview');
+  if(!amt){ el.textContent = ''; return; }
+  const cfg = {...incDraft, amt};
+  const n = paydays(viewDate.y, viewDate.m, cfg).length;
+  el.textContent = `≈ ${fmtFull(monthlyAvg(cfg))} al mes en promedio` +
+    (cfg.freq==='w' ? ` · ${MONTHS_ES[viewDate.m]} tiene ${n} pagos` : '');
+}
+
+function saveIncome(){
+  const amt = parseFloat(document.getElementById('incAmt').value);
+  if(!amt || amt<=0){ showToast('⚠️ Ingresa el monto de cada pago'); return; }
+  income = {
+    name: document.getElementById('incName').value.trim() || 'Sueldo',
+    amt, freq: incDraft.freq, wday: incDraft.wday, day: incDraft.day
+  };
+  saveInc();
+  document.getElementById('incOv').classList.remove('on');
+  render();
+  showToast('💵 Ingreso guardado');
+}
+
+function removeIncome(){
+  showConfirm('💵', 'Quitar ingreso', 'Se quitará la configuración de tu ingreso. Los cobros ya registrados se conservan.', 'Quitar', ()=>{
+    income = null; saveInc();
+    document.getElementById('incOv').classList.remove('on');
+    render();
+    showToast('Ingreso quitado');
+  });
+}
+
+// Plan de deudas: usa el ingreso mensual promedio si el campo está vacío
+function prefillPlanIncome(){
+  const el = document.getElementById('planIncome');
+  if(el && !el.value && income) el.value = Math.round(monthlyAvg());
+}
 
 // ══════════════════════════════════════════════════════
 //  v1.5 — EQUIVALENCIA EN OTRA MONEDA (tipo de cambio automático)
