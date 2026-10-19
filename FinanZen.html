@@ -6,9 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#6C63FF">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-title" content="FinanZen">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <title>FinanZen</title>
 <style>
-:root{--p:#6C63FF;--pd:#5248D9;--g:#00C896;--r:#FF4757;--bg:#F0F2FF;--s:#FFFFFF;--t:#1A1A2E;--m:#8890A4;--b:#E8EAF6;--sh:0 4px 20px rgba(108,99,255,.15);--rad:16px;--nh:68px}
+:root{color-scheme:light dark;--p:#6C63FF;--pd:#5248D9;--g:#00C896;--r:#FF4757;--bg:#F0F2FF;--s:#FFFFFF;--t:#1A1A2E;--m:#8890A4;--b:#E8EAF6;--rbg:#FFF0F0;--tst:#1A1A2E;--sh:0 4px 20px rgba(108,99,255,.15);--rad:16px;--nh:68px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overscroll-behavior:none}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);max-width:430px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden}
@@ -32,7 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* STAT CARDS */
 .stat-row{display:flex;gap:12px;padding:0 16px;margin-top:-42px;position:relative;z-index:10}
-.sc{flex:1;background:#fff;border-radius:var(--rad);padding:14px 14px 16px;box-shadow:var(--sh)}
+.sc{flex:1;background:var(--s);border-radius:var(--rad);padding:14px 14px 16px;box-shadow:var(--sh)}
 .sc-lbl{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:5px}
 .sc-lbl i{font-size:14px}
 .sc-amt{font-size:20px;font-weight:800;letter-spacing:-0.5px}
@@ -47,7 +52,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* TRANSACTIONS */
 .tx-list{display:flex;flex-direction:column;gap:10px}
-.tx{background:#fff;border-radius:var(--rad);padding:13px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);animation:fadeUp .3s ease;cursor:default;user-select:none;position:relative}
+.tx{background:var(--s);border-radius:var(--rad);padding:13px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);animation:fadeUp .3s ease;cursor:default;user-select:none;position:relative}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .tx-ico{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
 .tx-info{flex:1;min-width:0}
@@ -69,7 +74,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .empty p{font-size:14px;line-height:1.6}
 
 /* BOTTOM NAV */
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--b);display:flex;height:var(--nh);z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--s);border-top:1px solid var(--b);display:flex;height:var(--nh);z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:.2s;position:relative}
 .ni .nico{font-size:22px;transition:.2s}
 .ni .nlbl{font-size:9px;color:var(--m);font-weight:500;transition:.2s}
@@ -85,7 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* MODAL OVERLAY */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(3px)}
 .ov.on{opacity:1;pointer-events:all}
-.modal{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;padding:20px 20px 40px;transform:translateY(102%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
+.modal{position:absolute;bottom:0;left:0;right:0;background:var(--s);border-radius:24px 24px 0 0;padding:20px 20px 40px;transform:translateY(102%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
 .ov.on .modal{transform:translateY(0)}
 .mhandle{width:40px;height:4px;background:var(--b);border-radius:2px;margin:0 auto 18px}
 .mtitle{font-size:20px;font-weight:800;margin-bottom:18px;text-align:center;letter-spacing:-0.5px}
@@ -93,7 +98,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* TYPE TOGGLE */
 .ttog{display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:20px}
 .tbtn{flex:1;padding:10px;border:none;background:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;color:var(--m)}
-.tbtn.on{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.tbtn.on{background:var(--s);box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .tbtn.on.eg{color:var(--r)}
 .tbtn.on.ei{color:var(--g)}
 
@@ -107,7 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cats-scroll{overflow-x:auto;margin:0 -20px;padding:0 20px 6px;scrollbar-width:none;margin-bottom:16px}
 .cats-scroll::-webkit-scrollbar{display:none}
 .cats-row{display:flex;gap:8px;width:max-content}
-.cpill{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border:2px solid var(--b);border-radius:13px;background:#fff;cursor:pointer;transition:.2s;min-width:64px}
+.cpill{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border:2px solid var(--b);border-radius:13px;background:var(--s);cursor:pointer;transition:.2s;min-width:64px}
 .cpill.on{border-color:var(--p);background:rgba(108,99,255,.07)}
 .cpill .ce{font-size:24px}
 .cpill .cn{font-size:10px;color:var(--m);font-weight:500;white-space:nowrap}
@@ -115,7 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* FORM */
 .flbl{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;display:block}
-.finp{width:100%;padding:14px 16px;border:2px solid var(--b);border-radius:12px;font-size:15px;color:var(--t);outline:none;transition:.2s;background:#fff;margin-bottom:14px;font-family:inherit}
+.finp{width:100%;padding:14px 16px;border:2px solid var(--b);border-radius:12px;font-size:15px;color:var(--t);outline:none;transition:.2s;background:var(--s);margin-bottom:14px;font-family:inherit}
 .finp:focus{border-color:var(--p)}
 
 /* SAVE BTN */
@@ -128,7 +133,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* STATS PAGE */
 .spg{padding:16px;padding-bottom:calc(var(--nh) + 76px)}
-.chart-card{background:#fff;border-radius:var(--rad);padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px}
+.chart-card{background:var(--s);border-radius:var(--rad);padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px}
 .ct{font-size:14px;font-weight:700;margin-bottom:16px}
 .donut-wrap{display:flex;align-items:center;gap:18px;margin-bottom:6px}
 .legend{flex:1}
@@ -146,13 +151,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* HISTORY PAGE */
 .hpg{padding:16px;padding-bottom:calc(var(--nh) + 76px)}
-.sinp{width:100%;padding:12px 16px 12px 42px;border:2px solid var(--b);border-radius:12px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238890A4' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") 14px center no-repeat;margin-bottom:14px;transition:.2s;font-family:inherit}
+.sinp{width:100%;padding:12px 16px 12px 42px;border:2px solid var(--b);border-radius:12px;font-size:14px;outline:none;background:var(--s) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238890A4' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") 14px center no-repeat;margin-bottom:14px;transition:.2s;font-family:inherit}
 .sinp:focus{border-color:var(--p)}
 .dglbl{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 8px}
 
 /* SETTINGS PAGE */
 .setpg{padding:16px;padding-bottom:calc(var(--nh) + 76px)}
-.set-card{background:#fff;border-radius:var(--rad);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px}
+.set-card{background:var(--s);border-radius:var(--rad);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px}
 .si{display:flex;align-items:center;padding:15px 16px;gap:13px;border-bottom:1px solid var(--b);cursor:pointer;transition:.15s}
 .si:last-child{border-bottom:none}
 .si:active{background:var(--bg)}
@@ -177,7 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bnew{display:flex;align-items:center;gap:8px;padding:14px 16px;cursor:pointer;color:var(--p);font-weight:600;font-size:13px}
 
 /* TOAST */
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--t);color:#fff;padding:11px 22px;border-radius:50px;font-size:13px;font-weight:600;z-index:999;transition:transform .3s;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--tst);color:#fff;padding:11px 22px;border-radius:50px;font-size:13px;font-weight:600;z-index:999;transition:transform .3s;white-space:nowrap;pointer-events:none}
 .toast.on{transform:translateX(-50%) translateY(0)}
 
 /* CURRENCY PICKER */
@@ -201,7 +206,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Month summary chips */
 .month-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:14px}
 .month-chips::-webkit-scrollbar{display:none}
-.mchip{padding:7px 14px;border-radius:50px;background:#fff;border:2px solid var(--b);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s;flex-shrink:0;color:var(--m)}
+.mchip{padding:7px 14px;border-radius:50px;background:var(--s);border:2px solid var(--b);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s;flex-shrink:0;color:var(--m)}
 .mchip.on{border-color:var(--p);color:var(--p);background:rgba(108,99,255,.07)}
 
 /* No budget state */
@@ -210,7 +215,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Confirm dialog */
 .confirm-dlg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .confirm-dlg.on{display:flex}
-.confirm-box{background:#fff;border-radius:20px;padding:24px;margin:20px;max-width:320px;width:100%;text-align:center;animation:fadeUp .3s}
+.confirm-box{background:var(--s);border-radius:20px;padding:24px;margin:20px;max-width:320px;width:100%;text-align:center;animation:fadeUp .3s}
 .confirm-ico{font-size:48px;margin-bottom:12px}
 .confirm-title{font-size:18px;font-weight:700;margin-bottom:8px}
 .confirm-msg{font-size:14px;color:var(--m);line-height:1.5;margin-bottom:20px}
@@ -221,7 +226,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* Budget modal selects */
 .bcat-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-.bcat-pill{padding:8px 14px;border:2px solid var(--b);border-radius:50px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;transition:.2s;color:var(--m)}
+.bcat-pill{padding:8px 14px;border:2px solid var(--b);border-radius:50px;background:var(--s);cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;transition:.2s;color:var(--m)}
 .bcat-pill.on{border-color:var(--p);color:var(--p);background:rgba(108,99,255,.07)}
 
 /* tips bar */
@@ -229,7 +234,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tip-bar span{font-size:18px}
 
 /* ══ GASTOS RECURRENTES ══════════════════════════════ */
-.recur-card{background:#fff;border-radius:var(--rad);box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px;overflow:hidden}
+.recur-card{background:var(--s);border-radius:var(--rad);box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px;overflow:hidden}
 .recur-hdr{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--b)}
 .recur-htitle{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
 .recur-add-btn{font-size:11px;font-weight:700;color:var(--p);cursor:pointer;background:rgba(108,99,255,.1);border:none;border-radius:8px;padding:6px 12px;font-family:inherit}
@@ -297,7 +302,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cc-act-btn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
 
 /* Utilization bar */
-.util-bar-wrap{padding:12px 14px;background:#fff;border-radius:0 0 10px 10px;margin-top:-6px;margin-bottom:4px;box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.util-bar-wrap{padding:12px 14px;background:var(--s);border-radius:0 0 10px 10px;margin-top:-6px;margin-bottom:4px;box-shadow:0 4px 14px rgba(0,0,0,.07)}
 .util-row{display:flex;justify-content:space-between;font-size:11px;color:var(--m);margin-bottom:6px}
 .util-track{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:10px}
 .util-fill{height:100%;border-radius:3px;transition:width .8s}
@@ -315,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .rate-chip-val.ok{color:var(--g)}
 
 /* Payoff info */
-.payoff-card{background:#fff;border-radius:var(--rad);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
+.payoff-card{background:var(--s);border-radius:var(--rad);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
 .payoff-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
 .payoff-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--b);font-size:13px}
 .payoff-row:last-child{border-bottom:none}
@@ -336,7 +341,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .strat-detail{font-size:11px;color:var(--m);margin-top:2px}
 
 /* Payoff calculator */
-.calc-card{background:#fff;border-radius:var(--rad);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
+.calc-card{background:var(--s);border-radius:var(--rad);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
 .calc-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .calc-row{display:flex;gap:10px;margin-bottom:12px;align-items:flex-end}
 .calc-inp-wrap{flex:1}
@@ -351,7 +356,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* TDC page padding */
 .tdcpg{padding:16px;padding-bottom:calc(var(--nh) + 76px)}
-.tdc-empty{text-align:center;padding:48px 24px;background:#fff;border-radius:var(--rad);box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.tdc-empty{text-align:center;padding:48px 24px;background:var(--s);border-radius:var(--rad);box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .tdc-empty .e-ico{font-size:56px;margin-bottom:14px}
 .tdc-empty h3{font-size:17px;font-weight:700;margin-bottom:8px}
 .tdc-empty p{font-size:14px;color:var(--m);line-height:1.6;margin-bottom:18px}
@@ -359,7 +364,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* Bank quick-select */
 .bank-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
-.bank-btn{padding:10px 6px;border:2px solid var(--b);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:.15s}
+.bank-btn{padding:10px 6px;border:2px solid var(--b);border-radius:12px;background:var(--s);cursor:pointer;text-align:center;transition:.15s}
 .bank-btn.on{border-color:var(--p);background:rgba(108,99,255,.07)}
 .bank-btn .bank-ico{font-size:20px;margin-bottom:3px}
 .bank-btn .bank-name{font-size:10px;font-weight:600;color:var(--m)}
@@ -376,7 +381,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* Recurring modal day selector */
 .day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px}
-.day-btn{padding:8px 4px;border:2px solid var(--b);border-radius:9px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:.15s;color:var(--m)}
+.day-btn{padding:8px 4px;border:2px solid var(--b);border-radius:9px;background:var(--s);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:.15s;color:var(--m)}
 .day-btn.on{border-color:var(--p);background:rgba(108,99,255,.08);color:var(--p)}
 
 /* ══ PDF ANÁLISIS ═══════════════════════════════════ */
@@ -424,11 +429,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .alert-box.warn{background:rgba(255,71,87,.08);color:var(--r)}
 
 /* ══ PLAN DE ATAQUE ══════════════════════════════════ */
-.plan-card{background:#fff;border-radius:var(--rad);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
+.plan-card{background:var(--s);border-radius:var(--rad);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
 .plan-title{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;letter-spacing:-.3px}
 .plan-income-lbl{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .plan-income-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
-.plan-income-inp{flex:1;padding:12px 14px;border:2px solid var(--b);border-radius:10px;font-size:18px;font-weight:700;color:var(--t);outline:none;font-family:inherit;transition:.2s;background:#fff}
+.plan-income-inp{flex:1;padding:12px 14px;border:2px solid var(--b);border-radius:10px;font-size:18px;font-weight:700;color:var(--t);outline:none;font-family:inherit;transition:.2s;background:var(--s)}
 .plan-income-inp:focus{border-color:var(--p)}
 .plan-income-unit{font-size:13px;color:var(--m);flex-shrink:0}
 .plan-hint{font-size:11px;color:var(--m);margin-bottom:12px;line-height:1.4}
@@ -441,7 +446,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-avail-val.danger{color:var(--r)}
 .plan-avail-val.neutral{color:var(--t)}
 .plan-strat-row{display:flex;gap:8px;margin-bottom:14px}
-.plan-strat-btn{flex:1;padding:10px 8px;border:2px solid var(--b);border-radius:12px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--m);transition:.2s;text-align:center}
+.plan-strat-btn{flex:1;padding:10px 8px;border:2px solid var(--b);border-radius:12px;background:var(--s);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--m);transition:.2s;text-align:center}
 .plan-strat-btn.active{border-color:var(--p);background:rgba(108,99,255,.08);color:var(--p)}
 .plan-strat-btn:active{transform:scale(.97)}
 .plan-banner{border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.6}
@@ -450,7 +455,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-banner.danger{background:rgba(255,71,87,.1);color:var(--r);border:1px solid rgba(255,71,87,.25)}
 .plan-phase{border-radius:14px;padding:14px;margin-bottom:10px;position:relative}
 .plan-phase.attack{background:linear-gradient(135deg,rgba(108,99,255,.09),rgba(139,92,246,.05));border:2px solid rgba(108,99,255,.25)}
-.plan-phase.maintain{background:#fff;border:1px solid var(--b)}
+.plan-phase.maintain{background:var(--s);border:1px solid var(--b)}
 .plan-phase-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:50px;font-size:10px;font-weight:700;margin-bottom:9px;text-transform:uppercase;letter-spacing:.3px}
 .plan-phase-badge.attack{background:var(--p);color:#fff}
 .plan-phase-badge.maintain{background:var(--b);color:var(--m)}
@@ -467,7 +472,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-phase-payoff .interest{color:var(--r);font-size:11px}
 .plan-phase-roll{font-size:11px;margin-top:6px;padding:6px 10px;background:rgba(0,200,150,.08);border-radius:8px;color:#007A55}
 .plan-compare{display:flex;gap:1px;background:var(--b);border-radius:14px;overflow:hidden;margin-bottom:12px}
-.plan-compare-col{flex:1;background:#fff;padding:14px 10px;text-align:center}
+.plan-compare-col{flex:1;background:var(--s);padding:14px 10px;text-align:center}
 .plan-compare-col.highlight{background:rgba(108,99,255,.04)}
 .plan-compare-lbl{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
 .plan-compare-val{font-size:16px;font-weight:800;margin-bottom:3px}
@@ -478,6 +483,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-tip{background:var(--bg);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--m);line-height:1.6;margin-bottom:12px}
 .plan-tip strong{color:var(--t)}
 .plan-empty{text-align:center;padding:30px 20px;color:var(--m);font-size:13px}
+
+/* ===== v1.4: edición, modo oscuro ===== */
+.tx{cursor:pointer}
+.dbtn{width:100%;margin-top:10px;padding:14px;border:none;border-radius:14px;background:var(--rbg);color:var(--r);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0E0F1C;--s:#1B1C30;--t:#ECEDF7;--m:#9198B2;--b:#2D2F4B;--rbg:rgba(255,71,87,.16);--tst:#3A3C5E;--sh:0 4px 20px rgba(0,0,0,.4)}
+  .tx,.chart-card,.set-card,.recur-card,.payoff-card,.calc-card,.plan-card{box-shadow:0 2px 10px rgba(0,0,0,.3)}
+  .finp,.sinp,.amtinp,.plan-income-inp,select{color:var(--t)}
+  .plan-banner.ok,.plan-phase-badge.done,.plan-phase-pill.rolled,.plan-phase-roll,.plan-savings{color:#5BE3B5}
+  .plan-banner.warn{color:#FFC861}
+  .paid-badge,.conf-badge.hi{color:#3EDBA8}
+}
 </style>
 </head>
 <body>
@@ -585,7 +602,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="set-card">
       <div class="si" onclick="openCurrencyModal()">
         <div class="sico">💱</div>
-        <div class="sinfo"><div class="slbl">Moneda</div><div class="sval" id="curValLbl">Dólar (USD)</div></div>
+        <div class="sinfo"><div class="slbl">Moneda</div><div class="sval" id="curValLbl">🇲🇽 Peso mexicano (MXN)</div></div>
         <span class="sarr">›</span>
       </div>
     </div>
@@ -604,20 +621,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <div style="font-size:12px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Datos</div>
     <div class="set-card">
+      <div class="si" onclick="exportBackup()">
+        <div class="sico">💾</div>
+        <div class="sinfo"><div class="slbl">Crear respaldo</div><div class="sval" id="backupLbl">Guarda todos tus datos en un archivo</div></div>
+        <span class="sarr">›</span>
+      </div>
+      <div class="si" onclick="document.getElementById('restoreInp').click()">
+        <div class="sico">♻️</div>
+        <div class="sinfo"><div class="slbl">Restaurar respaldo</div><div class="sval">Carga un archivo de respaldo (.json)</div></div>
+        <span class="sarr">›</span>
+      </div>
+      <input type="file" id="restoreInp" style="display:none" onchange="handleRestoreFile(this.files[0]);this.value=''">
       <div class="si" onclick="exportCSV()">
         <div class="sico">📤</div>
         <div class="sinfo"><div class="slbl">Exportar a CSV</div><div class="sval">Descarga todos tus movimientos</div></div>
         <span class="sarr">›</span>
       </div>
       <div class="si" onclick="confirmClear()">
-        <div class="sico" style="background:#FFF0F0">🗑️</div>
+        <div class="sico" style="background:var(--rbg)">🗑️</div>
         <div class="sinfo"><div class="slbl" style="color:var(--r)">Borrar todos los datos</div><div class="sval">Esta acción no se puede deshacer</div></div>
         <span class="sarr">›</span>
       </div>
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      FinanZen v1.3 · Datos guardados localmente
+      FinanZen v1.4 · Datos guardados localmente
     </div>
   </div>
 </div>
@@ -748,7 +776,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <label class="flbl">Fecha</label>
     <input class="finp" id="dateInp" type="date">
     <!-- SAVE -->
-    <button class="sbtn" onclick="saveTransaction()">Guardar movimiento</button>
+    <button class="sbtn" id="addSaveBtn" onclick="saveTransaction()">Guardar movimiento</button>
+    <button class="dbtn" id="addDelBtn" onclick="deleteEditingTx()" style="display:none">🗑️ Eliminar movimiento</button>
   </div>
 </div>
 
@@ -807,7 +836,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
 
       <!-- Fields table -->
-      <div style="background:#fff;border-radius:12px;padding:4px 14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)" id="pdfFieldsTable"></div>
+      <div style="background:var(--s);border-radius:12px;padding:4px 14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)" id="pdfFieldsTable"></div>
 
       <!-- Transactions section -->
       <div id="pdfTxSection" style="display:none">
@@ -882,7 +911,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <input class="finp" id="tdcCat" type="number" placeholder="68.5" step="0.1" min="0" max="300" style="margin-bottom:0">
         </div>
       </div>
-      <div style="background:#fff;border-radius:10px;padding:10px 12px;font-size:12px;color:var(--m)" id="ratePreview">
+      <div style="background:var(--s);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--m)" id="ratePreview">
         Tasa mensual: — · Interés sobre saldo: —
       </div>
     </div>
@@ -989,7 +1018,7 @@ const RECUR_KEY   = 'finanzenrecur_v1';
 
 let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let budgets      = JSON.parse(localStorage.getItem(BUDGET_KEY)||'{}');
-let prefs        = JSON.parse(localStorage.getItem(PREF_KEY)||'{"cur":"USD","sym":"$","curName":"Dólar (USD)"}');
+let prefs        = JSON.parse(localStorage.getItem(PREF_KEY)||'{"cur":"MXN","sym":"$","curName":"🇲🇽 Peso mexicano (MXN)"}');
 let recurring    = JSON.parse(localStorage.getItem(RECUR_KEY)||'[]');
 
 const now = new Date();
@@ -1064,7 +1093,8 @@ function fmt(n){
   return (n<0?'-':'')+s+str;
 }
 
-function fmtFull(n){ return sym()+Math.abs(n).toFixed(2); }
+function fmtFull(n){ return sym()+num2(Math.abs(n)); }
+function num2(n){ return Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -1108,7 +1138,7 @@ function render(){
 
   // Header
   document.getElementById('monthLabel').textContent = MONTHS_ES[viewDate.m]+' '+viewDate.y;
-  document.getElementById('balAmt').textContent = Math.abs(bal).toFixed(2);
+  document.getElementById('balAmt').textContent = num2(Math.abs(bal));
   document.getElementById('balCur').textContent = sym();
   document.getElementById('balSub').textContent = bal<0
     ? `⚠️ Gastas ${fmtFull(exp-inc)} más de lo que ingresas`
@@ -1174,17 +1204,17 @@ function txHTML(t){
   const dateStr = `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
   const sign = t.type==='e'?'-':'+';
   const cls  = t.type==='e'?'amt-e':'amt-i';
-  return `<div class="tx" data-id="${t.id}" ontouchend="handleTxTouch(event,this)">
+  return `<div class="tx" data-id="${t.id}" ontouchend="handleTxTouch(event,this)" onclick="onTxClick('${t.id}',this)">
     <div class="tx-ico" style="background:${bg}">${cat.e}</div>
     <div class="tx-info">
-      <div class="tx-name">${t.desc||cat.n}</div>
+      <div class="tx-name">${esc(t.desc)||cat.n}</div>
       <div class="tx-cat">${cat.n}</div>
     </div>
     <div class="tx-right">
       <div class="tx-amt ${cls}">${sign}${fmtFull(t.amt)}</div>
       <div class="tx-date">${dateStr}</div>
     </div>
-    <button class="tx-del" onclick="deleteById('${t.id}')">Eliminar</button>
+    <button class="tx-del" onclick="event.stopPropagation();deleteById('${t.id}')">Eliminar</button>
   </div>`;
 }
 
@@ -1192,9 +1222,9 @@ let touchTimer;
 function bindLongPress(){
   document.querySelectorAll('.tx').forEach(el=>{
     el.addEventListener('touchstart',()=>{
-      touchTimer=setTimeout(()=>{ el.classList.add('show-del'); },400);
+      touchTimer=setTimeout(()=>{ el.classList.add('show-del'); el._lp=true; },400);
     },{passive:true});
-    el.addEventListener('touchend',()=>clearTimeout(touchTimer),{passive:true});
+    el.addEventListener('touchend',()=>{ clearTimeout(touchTimer); if(el._lp) el._lpEnd=Date.now(); },{passive:true});
     el.addEventListener('touchmove',()=>clearTimeout(touchTimer),{passive:true});
   });
 }
@@ -1264,7 +1294,7 @@ function drawDonut(totals, total){
 
   if(!total||!entries.length){
     ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
-    ctx.strokeStyle='#E8EAF6'; ctx.lineWidth=16; ctx.stroke();
+    ctx.strokeStyle=cssVar('--b'); ctx.lineWidth=16; ctx.stroke();
     legendEl.innerHTML='<div style="color:var(--m);font-size:12px">Sin gastos este mes</div>';
     return;
   }
@@ -1283,11 +1313,11 @@ function drawDonut(totals, total){
   });
   // Hole
   ctx.beginPath(); ctx.arc(cx,cy,iR,0,2*Math.PI);
-  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle=cssVar('--s'); ctx.fill();
   // Center text
-  ctx.fillStyle='#1A1A2E'; ctx.font='bold 11px -apple-system,sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle=cssVar('--t'); ctx.font='bold 11px -apple-system,sans-serif'; ctx.textAlign='center';
   ctx.fillText('Total',cx,cy-4);
-  ctx.fillStyle='var(--r)'; ctx.font='bold 9px -apple-system,sans-serif';
+  ctx.fillStyle='#FF4757'; ctx.font='bold 9px -apple-system,sans-serif';
   ctx.fillText(fmt(total),cx,cy+10);
 
   // Legend (top 4)
@@ -1329,7 +1359,7 @@ function drawBars(){
     const baseY=H-bot;
 
     // Grid line
-    ctx.strokeStyle='#F0F2FF'; ctx.lineWidth=1;
+    ctx.strokeStyle=cssVar('--b'); ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(pad,baseY-Math.floor((H-bot-10)/2));
     ctx.lineTo(W-pad,baseY-Math.floor((H-bot-10)/2)); ctx.stroke();
 
@@ -1349,7 +1379,7 @@ function drawBars(){
       ctx.fill();
     }
     // Label
-    ctx.fillStyle=d.isCur?'#6C63FF':'#8890A4';
+    ctx.fillStyle=d.isCur?'#6C63FF':cssVar('--m');
     ctx.font=(d.isCur?'bold ':'')+'10px -apple-system,sans-serif';
     ctx.textAlign='center';
     ctx.fillText(d.lbl,x+barW/2,H-8);
@@ -1357,10 +1387,10 @@ function drawBars(){
 
   // Legend
   ctx.fillStyle='rgba(0,200,150,.7)'; ctx.fillRect(W-70,8,10,10);
-  ctx.fillStyle='#8890A4'; ctx.font='9px sans-serif'; ctx.textAlign='left';
+  ctx.fillStyle=cssVar('--m'); ctx.font='9px sans-serif'; ctx.textAlign='left';
   ctx.fillText('Ingresos',W-56,17);
   ctx.fillStyle='rgba(108,99,255,.7)'; ctx.fillRect(W-70,22,10,10);
-  ctx.fillStyle='#8890A4';
+  ctx.fillStyle=cssVar('--m');
   ctx.fillText('Gastos',W-56,31);
 }
 
@@ -1430,6 +1460,7 @@ function renderBudgets(txs){
 function renderSettingsProfile(){
   document.getElementById('profSub').textContent = `${transactions.length} movimiento${transactions.length!==1?'s':''} registrado${transactions.length!==1?'s':''}`;
   document.getElementById('curValLbl').textContent = prefs.curName;
+  renderBackupLbl();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1439,10 +1470,11 @@ let currentType = 'e';
 let selectedCat = 'food';
 
 function openAddModal(){
+  editingTxId=null; setAddModalMode(false);
   currentType='e'; selectedCat='food';
   document.getElementById('amtInp').value='';
   document.getElementById('descInp').value='';
-  document.getElementById('dateInp').value=new Date().toISOString().split('T')[0];
+  document.getElementById('dateInp').value=todayISO();
   document.getElementById('amtCurSym').textContent=sym();
   setType('e',true);
   document.getElementById('addOv').classList.add('on');
@@ -1487,6 +1519,19 @@ function saveTransaction(){
     amt, date,
     desc: document.getElementById('descInp').value.trim()
   };
+  if(editingTxId){
+    const idx = transactions.findIndex(x=>x.id===editingTxId);
+    if(idx>-1){
+      const old = transactions[idx];
+      transactions[idx] = {...old, type:tx.type, cat:tx.cat, amt:tx.amt, date:tx.date, desc:tx.desc};
+    }
+    editingTxId = null;
+    save();
+    document.getElementById('addOv').classList.remove('on');
+    showToast('✏️ Movimiento actualizado');
+    render();
+    return;
+  }
   transactions.unshift(tx);
   save();
   document.getElementById('addOv').classList.remove('on');
@@ -1638,7 +1683,7 @@ function exportCSV(){
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
-  a.download=`FinanZen_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download=`FinanZen_${todayISO()}.csv`;
   a.click();
   showToast('📤 CSV exportado');
 }
@@ -2025,7 +2070,7 @@ function renderPdfResults(d){
     txList.innerHTML = preview.map(tx=>`
       <div class="pdf-tx-item">
         <span class="pdf-tx-date">${tx.rawDate}</span>
-        <span class="pdf-tx-desc">${tx.desc}</span>
+        <span class="pdf-tx-desc">${esc(tx.desc)}</span>
         <span class="pdf-tx-amt ${tx.isPayment?'pdf-tx-payment':'pdf-tx-charge'}">
           ${tx.isPayment?'+':'-'}${fmtFull(tx.amt)}
         </span>
@@ -2079,7 +2124,7 @@ function importPdfCard(){
 /* ── Import transactions from PDF ── */
 function importPdfTransactions(){
   if(!pdfExtracted || !pdfExtracted.transactions.length) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayISO();
   const curYear = new Date().getFullYear();
   let count = 0;
 
@@ -2254,12 +2299,12 @@ function cardHTML(c){
   <div class="cc-card" style="background:linear-gradient(145deg,${c.color} 0%,${darken(c.color,30)} 100%)">
     <div class="cc-top">
       <div>
-        <div class="cc-bank">${c.bank}</div>
-        <div class="cc-alias">${c.alias||''}</div>
+        <div class="cc-bank">${esc(c.bank)}</div>
+        <div class="cc-alias">${esc(c.alias)}</div>
       </div>
       <div class="cc-chip">💳</div>
     </div>
-    <div class="cc-number">•••• •••• •••• ${c.lastFour||'????'}</div>
+    <div class="cc-number">•••• •••• •••• ${esc(c.lastFour)||'????'}</div>
     <div class="cc-bottom">
       <div>
         <div class="cc-bal-lbl">Saldo (deuda)</div>
@@ -2316,7 +2361,7 @@ function cardHTML(c){
       <span class="payoff-key">Intereses totales pagando mínimo</span>
       <span class="payoff-val danger">${fmtFull(intMin)}</span>
     </div>`:''}
-    ${nMin===Infinity?`<div style="background:#FFF0F0;border-radius:8px;padding:10px;font-size:12px;color:var(--r);margin-top:6px">
+    ${nMin===Infinity?`<div style="background:var(--rbg);border-radius:8px;padding:10px;font-size:12px;color:var(--r);margin-top:6px">
       ⚠️ <b>Alerta:</b> Tu pago mínimo (${fmtFull(minP)}) es menor al interés mensual (${fmtFull(intMonth)}). La deuda <b>nunca se liquidará</b> así. Debes pagar más de ${fmtFull(intMonth)} al mes.
     </div>`:''}
   </div>`;
@@ -2511,7 +2556,7 @@ function renderDebtPlan(){
       const prevSim  = plan.pool.find(c=>c.id===prevCard.id);
       const prevPayoff = prevSim?.paidOffMonth;
       phaseNote = prevPayoff
-        ? `<div style="font-size:11px;color:var(--m);margin-bottom:8px">🔓 Esta fase inicia ${monthLabel(prevPayoff)} — cuando liquides ${prevCard.bank}${prevCard.alias?' ('+prevCard.alias+')':''}</div>`
+        ? `<div style="font-size:11px;color:var(--m);margin-bottom:8px">🔓 Esta fase inicia ${monthLabel(prevPayoff)} — cuando liquides ${esc(prevCard.bank)}${prevCard.alias?' ('+esc(prevCard.alias)+')':''}</div>`
         : '';
     }
 
@@ -2521,7 +2566,7 @@ function renderDebtPlan(){
         ${idx===0?'⚡ Atacar primero':'Fase '+(idx+1)+' — Después de fase '+(idx)}
       </div>
       ${phaseNote}
-      <div class="plan-phase-bank">${origCard.bank}${origCard.alias?' · '+origCard.alias:''} &nbsp;<span style="font-weight:400;opacity:.6">•••• ${origCard.lastFour||'????'}</span></div>
+      <div class="plan-phase-bank">${esc(origCard.bank)}${origCard.alias?' · '+esc(origCard.alias):''} &nbsp;<span style="font-weight:400;opacity:.6">•••• ${esc(origCard.lastFour)||'????'}</span></div>
       <div class="plan-phase-stats">
         Deuda: <b>${fmtFull(origCard.balance)}</b> &nbsp;·&nbsp;
         Tasa: <b>${origCard.annualRate.toFixed(1)}%</b> &nbsp;·&nbsp;
@@ -2751,7 +2796,7 @@ function renderRecurringSection(txs){
     return `<div class="recur-item${isPaid?' is-paid':''}">
       <div class="ri-ico" style="background:${bg}">${cat.e}</div>
       <div class="ri-info">
-        <div class="ri-name">${r.name}</div>
+        <div class="ri-name">${esc(r.name)}</div>
         <div class="ri-sub"><span>${cat.n}</span> · <span>${dayLabel}</span></div>
       </div>
       <div class="ri-right">
@@ -2839,7 +2884,7 @@ function renderRecurManage(){
     return `<div class="ri-manage">
       <div class="ri-ico" style="background:${cat.col}22;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${cat.e}</div>
       <div class="rim-info">
-        <div class="rim-name">${r.name}</div>
+        <div class="rim-name">${esc(r.name)}</div>
         <div class="rim-sub">${cat.n}${r.day?' · Día '+r.day:''}</div>
       </div>
       <div class="rim-amt">${fmtFull(r.amt)}</div>
@@ -2933,6 +2978,217 @@ function saveRecurring(){
 // ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════
+//  v1.4 — UTILIDADES
+// ══════════════════════════════════════════════════════
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function todayISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function cssVar(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888';
+}
+
+// ══════════════════════════════════════════════════════
+//  v1.4 — EDITAR MOVIMIENTOS
+// ══════════════════════════════════════════════════════
+let editingTxId = null;
+
+function setAddModalMode(edit){
+  document.getElementById('modalTitle').textContent = edit ? 'Editar movimiento' : 'Nuevo movimiento';
+  document.getElementById('addSaveBtn').textContent = edit ? 'Guardar cambios' : 'Guardar movimiento';
+  document.getElementById('addDelBtn').style.display = edit ? 'block' : 'none';
+}
+
+function onTxClick(id, el){
+  if(el._lp){ el._lp=false; if(Date.now()-(el._lpEnd||0)<700) return; }  // venía de mantener presionado
+  const open = document.querySelectorAll('.tx.show-del');
+  if(open.length){ open.forEach(x=>x.classList.remove('show-del')); return; }
+  openEditTx(id);
+}
+
+function openEditTx(id){
+  const t = transactions.find(x=>x.id===id);
+  if(!t) return;
+  editingTxId = id;
+  setType(t.type, true);
+  selectedCat = t.cat;
+  renderCategoryPills(t.type==='e' ? CAT_EXP : CAT_INC);
+  document.getElementById('amtInp').value  = t.amt;
+  document.getElementById('descInp').value = t.desc || '';
+  document.getElementById('dateInp').value = t.date;
+  document.getElementById('amtCurSym').textContent = sym();
+  setAddModalMode(true);
+  document.getElementById('addOv').classList.add('on');
+}
+
+function deleteEditingTx(){
+  const id = editingTxId;
+  if(!id) return;
+  showConfirm('🗑️', 'Eliminar movimiento', '¿Seguro que quieres eliminar este movimiento?', 'Eliminar', ()=>{
+    editingTxId = null;
+    document.getElementById('addOv').classList.remove('on');
+    deleteById(id);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  v1.4 — RESPALDO Y RESTAURACIÓN
+// ══════════════════════════════════════════════════════
+const LASTBK_KEY = 'finanzenlastbk_v1';
+
+function renderBackupLbl(){
+  const el = document.getElementById('backupLbl');
+  if(!el) return;
+  const ts = parseInt(localStorage.getItem(LASTBK_KEY)||'0', 10);
+  if(!ts){
+    el.textContent = transactions.length ? '⚠️ Aún no has hecho ningún respaldo' : 'Guarda todos tus datos en un archivo';
+    return;
+  }
+  const days = Math.floor((Date.now()-ts)/86400000);
+  el.textContent = 'Último respaldo: ' + (days===0 ? 'hoy' : days===1 ? 'ayer' : `hace ${days} días`);
+}
+
+function markBackup(){
+  localStorage.setItem(LASTBK_KEY, String(Date.now()));
+  renderBackupLbl();
+}
+
+async function exportBackup(){
+  const payload = {
+    app: 'FinanZen', version: 1, exportedAt: new Date().toISOString(),
+    data: { transactions, budgets, prefs, recurring, creditCards }
+  };
+  const name = `FinanZen_respaldo_${todayISO()}.json`;
+  const file = new File([JSON.stringify(payload, null, 1)], name, {type:'application/json'});
+  // En iPhone: hoja de compartir → "Guardar en Archivos", iCloud, AirDrop…
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:'Respaldo FinanZen'});
+      markBackup(); showToast('💾 Respaldo creado');
+      return;
+    }
+  }catch(e){
+    if(e && e.name==='AbortError') return;                    // el usuario canceló
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  markBackup(); showToast('💾 Respaldo descargado');
+}
+
+const SAFE_ID  = /^[A-Za-z0-9_-]{1,40}$/;
+const SAFE_CAT = /^[a-z]{1,20}$/;
+function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function numOr(v, d){ const n = Number(v); return Number.isFinite(n) ? n : d; }
+function intIn(v, lo, hi){ const n = parseInt(v,10); return n>=lo && n<=hi ? n : null; }
+function str(v, max){ return typeof v==='string' ? v.slice(0, max) : ''; }
+
+function sanitizeBackup(d){
+  const out = {};
+  out.transactions = (Array.isArray(d.transactions)?d.transactions:[])
+    .filter(t => t && typeof t==='object' && (t.type==='e'||t.type==='i')
+                 && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && numOr(t.amt,0) > 0)
+    .map(t => {
+      const o = {
+        id: SAFE_ID.test(t.id) ? t.id : newId(),
+        type: t.type,
+        cat: SAFE_CAT.test(t.cat) ? t.cat : 'other',
+        amt: numOr(t.amt,0), date: t.date, desc: str(t.desc, 200)
+      };
+      if(t.recurId!=null && SAFE_ID.test(t.recurId)){ o.recurId = t.recurId; o.isRecurring = true; }
+      return o;
+    });
+
+  out.budgets = {};
+  if(d.budgets && typeof d.budgets==='object'){
+    Object.entries(d.budgets).forEach(([k,v])=>{ if(SAFE_CAT.test(k) && numOr(v,0)>0) out.budgets[k]=numOr(v,0); });
+  }
+
+  out.recurring = (Array.isArray(d.recurring)?d.recurring:[])
+    .filter(r => r && typeof r==='object' && numOr(r.amt,0) > 0)
+    .map(r => ({
+      id: SAFE_ID.test(r.id) ? r.id : newId(),
+      name: str(r.name, 60) || 'Gasto fijo',
+      amt: numOr(r.amt,0),
+      cat: SAFE_CAT.test(r.cat) ? r.cat : 'other',
+      day: intIn(r.day,1,28) || 1
+    }));
+
+  out.creditCards = (Array.isArray(d.creditCards)?d.creditCards:[])
+    .filter(c => c && typeof c==='object')
+    .map(c => ({
+      id: SAFE_ID.test(c.id) ? c.id : newId(),
+      bankId: SAFE_ID.test(c.bankId) ? c.bankId : null,
+      bank: str(c.bank, 40) || 'Tarjeta',
+      alias: str(c.alias, 40),
+      lastFour: String(c.lastFour||'').replace(/\D/g,'').slice(-4),
+      balance: numOr(c.balance,0),
+      creditLimit: numOr(c.creditLimit,0),
+      annualRate: numOr(c.annualRate,0),
+      cat: numOr(c.cat,0),
+      minPayment: numOr(c.minPayment,0),
+      dueDay: intIn(c.dueDay,1,31),
+      cutDay: intIn(c.cutDay,1,31),
+      color: /^#[0-9A-Fa-f]{6}$/.test(c.color) ? c.color : '#6C63FF'
+    }));
+
+  const cur = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.cur);
+  out.prefs = cur ? {cur:cur.code, sym:cur.sym, curName:`${cur.flag} ${cur.name} (${cur.code})`} : null;
+  return out;
+}
+
+function handleRestoreFile(file){
+  if(!file) return;
+  const rd = new FileReader();
+  rd.onerror = () => showToast('⚠️ No se pudo leer el archivo');
+  rd.onload = () => {
+    let p;
+    try{ p = JSON.parse(rd.result); }catch(e){ showToast('⚠️ El archivo no es un respaldo válido'); return; }
+    if(!p || p.app!=='FinanZen' || !p.data || !Array.isArray(p.data.transactions)){
+      showToast('⚠️ Ese archivo no es un respaldo de FinanZen'); return;
+    }
+    const clean = sanitizeBackup(p.data);
+    const dt = new Date(p.exportedAt);
+    const when = isNaN(dt) ? 'fecha desconocida'
+      : dt.toLocaleDateString('es-MX', {day:'numeric', month:'long', year:'numeric'});
+    const n = clean.transactions.length;
+    showConfirm('♻️', 'Restaurar respaldo',
+      `El respaldo del ${when} tiene ${n} movimiento${n!==1?'s':''}, ${clean.creditCards.length} tarjeta(s) y ${clean.recurring.length} gasto(s) fijo(s). Reemplazará tus datos actuales (${transactions.length} movimientos). ¿Continuar?`,
+      'Restaurar', () => {
+        transactions = clean.transactions;
+        budgets      = clean.budgets;
+        recurring    = clean.recurring;
+        creditCards  = clean.creditCards;
+        if(clean.prefs) prefs = clean.prefs;
+        save(); saveBdg(); saveRecur(); saveTdc(); savePrefs();
+        render(); renderTdcPage();
+        showToast('✅ Respaldo restaurado');
+      });
+  };
+  rd.readAsText(file);
+}
+
+// ══════════════════════════════════════════════════════
+//  v1.4 — TEMA Y MODO SIN CONEXIÓN
+// ══════════════════════════════════════════════════════
+try{
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+    render();
+    if(document.getElementById('pgTdc').classList.contains('on')) renderTdcPage();
+  });
+}catch(e){}
+
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+
 setType('e',true);
 render();
 </script>
