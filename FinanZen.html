@@ -486,6 +486,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-empty{text-align:center;padding:30px 20px;color:var(--m);font-size:13px}
 
 
+/* ===== v1.9: efectivo ===== */
+.cash-main{padding:16px 16px 6px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.cash-amt{font-size:28px;font-weight:700;color:var(--ink);letter-spacing:-.6px;line-height:1.1}
+.cash-amt.neg{color:var(--r)}
+.cash-sub{font-size:12px;color:var(--m);margin-top:3px}
+.cash-alt{font-size:12px;color:var(--p);font-weight:600;margin-top:2px}
+.cash-alt:empty{display:none}
+.cash-stats{display:flex;gap:8px;padding:6px 16px 4px}
+.cash-stat{flex:1;background:var(--bg);border-radius:10px;padding:8px 10px}
+.cash-stat-l{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.5px}
+.cash-stat-v{font-size:14px;font-weight:700;color:var(--ink);margin-top:2px}
+.cash-btns{display:flex;gap:8px;padding:10px 16px 14px}
+.cash-btn{flex:1;border:none;border-radius:12px;padding:12px 8px;font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer}
+.cash-btn.pri{background:var(--pd);color:#fff}
+.cash-btn.sec{background:var(--card2);color:var(--ink)}
+.cash-btn:active{transform:scale(.98)}
+.cash-last{font-size:11.5px;color:var(--m);padding:0 16px 14px;margin-top:-4px}
+.xf-hint{text-align:center;font-size:13px;color:var(--m);margin:0 0 14px;line-height:1.45}
+.xf-hint:empty{display:none}
+.xf-hint .neg{color:var(--r);font-weight:600}
+.xf-all{background:var(--card2);color:var(--ink);border:none;border-radius:50px;padding:5px 12px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;margin-left:6px}
+.cadj-opt{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--b);border-radius:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer;font-size:13px;line-height:1.35}
+.cadj-opt.on{border-color:var(--p);background:rgba(46,125,123,.07)}
+.cadj-opt b{display:block;color:var(--ink);font-size:13.5px}
+.cadj-opt small{color:var(--m)}
+.tx-acct{display:inline-block;font-size:10px;font-weight:700;color:var(--p);background:rgba(46,125,123,.1);border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px}
+.amt-x{color:var(--m)}
+.tbtn.on{color:var(--ink)}
 /* ===== v1.8: estilo Finanzen (crema · salvia · verde azulado) ===== */
 body{-webkit-font-smoothing:antialiased}
 .hdr{background:var(--bg);padding:calc(env(safe-area-inset-top) + 18px) 16px 2px;overflow:visible}
@@ -627,6 +655,12 @@ body.on-home .fab{display:none}
       <span>💡</span>
       <span id="tipTxt">Toca el botón <b>+</b> para registrar tu primer movimiento.</span>
     </div>
+    <!-- BALANCE EN EFECTIVO -->
+    <div class="sec-hdr" style="margin-top:4px">
+      <span class="sec-title">👛 Balance en efectivo</span>
+    </div>
+    <div id="cashSection"></div>
+
     <!-- INGRESOS DEL MES -->
     <div class="sec-hdr" style="margin-top:4px">
       <span class="sec-title">💵 Mis ingresos del mes</span>
@@ -749,7 +783,7 @@ body.on-home .fab{display:none}
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      Finanzen v1.8 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
+      Finanzen v1.9.1 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -869,6 +903,12 @@ body.on-home .fab{display:none}
       <span class="amtpre" id="amtCurSym">$</span><input class="amtinp" id="amtInp" type="number" placeholder="0.00" min="0" step="0.01" oninput="updateAmtAlt()">
     </div>
     <div class="amt-alt" id="amtAlt"></div>
+    <!-- ACCOUNT -->
+    <label class="flbl" id="acctLbl">¿Con qué pagaste?</label>
+    <div class="ttog acct-tog">
+      <button class="tbtn on" id="acctBank" onclick="setAcct('bank')">🏦 Banco / tarjeta</button>
+      <button class="tbtn" id="acctCash" onclick="setAcct('cash')">💵 Efectivo</button>
+    </div>
     <!-- CATEGORIES -->
     <label class="flbl">Categoría</label>
     <div class="cats-scroll" id="catScroll">
@@ -1084,6 +1124,45 @@ body.on-home .fab{display:none}
 </div>
 
 <!-- ===== BUDGET MODAL ===== -->
+<!-- ===== CASH TRANSFER MODAL ===== -->
+<div class="ov" id="xfOv" onclick="closeModal(event,'xfOv')">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="xfTitle">Mover efectivo</div>
+    <div class="ttog">
+      <button class="tbtn" id="xfDep" onclick="setXfDir('dep')">🏦 Depositar al banco</button>
+      <button class="tbtn" id="xfWd" onclick="setXfDir('wd')">💵 Retirar a efectivo</button>
+    </div>
+    <div class="amtwrap" style="margin-bottom:8px;padding:10px 0">
+      <span class="amtpre" id="xfCurSym">$</span>
+      <input class="amtinp" id="xfAmt" type="number" placeholder="0.00" min="0" step="0.01" style="font-size:38px" oninput="updateXfHint()">
+    </div>
+    <div class="xf-hint" id="xfHint"></div>
+    <label class="flbl">Fecha</label>
+    <input class="finp" id="xfDate" type="date">
+    <label class="flbl">Nota (opcional)</label>
+    <input class="finp" id="xfNote" type="text" maxlength="60" placeholder="Ej: Depósito en ventanilla">
+    <button class="sbtn" id="xfSaveBtn" onclick="saveTransfer()">Confirmar depósito</button>
+    <button class="dbtn" id="xfDelBtn" onclick="deleteEditingXf()" style="display:none">🗑️ Eliminar movimiento</button>
+  </div>
+</div>
+
+<!-- ===== CASH ADJUST MODAL ===== -->
+<div class="ov" id="cadjOv" onclick="closeModal(event,'cadjOv')">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">👛 ¿Cuánto efectivo tienes?</div>
+    <div class="xf-hint" style="margin-bottom:12px">Cuenta tu efectivo y escribe el total. Finanzen registra la diferencia.</div>
+    <div class="amtwrap" style="margin-bottom:8px;padding:10px 0">
+      <span class="amtpre" id="cadjCurSym">$</span>
+      <input class="amtinp" id="cadjAmt" type="number" placeholder="0.00" min="0" step="0.01" style="font-size:38px" oninput="updateCadjHint()">
+    </div>
+    <div class="xf-hint" id="cadjHint"></div>
+    <div id="cadjOpts"></div>
+    <button class="sbtn" onclick="saveCashAdjust()">Guardar</button>
+  </div>
+</div>
+
 <!-- ===== INCOME MODAL ===== -->
 <div class="ov" id="incOv" onclick="closeModal(event,'incOv')">
   <div class="modal">
@@ -1243,7 +1322,9 @@ function getMonthTxs(y,m){
   });
 }
 
+const CAT_XFER = {id:'xfer', e:'🏦', n:'Transferencia', col:'#2E7D7B'};
 function getCat(type,id){
+  if(type==='t') return CAT_XFER;
   const arr = type==='e'?CAT_EXP:CAT_INC;
   return arr.find(c=>c.id===id) || arr[arr.length-1];
 }
@@ -1308,6 +1389,7 @@ function render(){
   renderBudgets(txs);
   renderRecurringSection(txs);
   renderIncomeSection(txs);
+  renderCashSection(txs);
   renderRecurManage();
   renderSettingsProfile();
 }
@@ -1336,6 +1418,7 @@ function renderRecent(txs){
 }
 
 function txHTML(t){
+  if(t.type==='t') return xferHTML(t);
   const cat = getCat(t.type, t.cat);
   const bg  = cat.col+'25';
   const d   = new Date(t.date+'T00:00:00');
@@ -1346,7 +1429,7 @@ function txHTML(t){
     <div class="tx-ico" style="background:${bg}">${cat.e}</div>
     <div class="tx-info">
       <div class="tx-name">${esc(t.desc)||cat.n}</div>
-      <div class="tx-cat">${cat.n}</div>
+      <div class="tx-cat">${cat.n}${t.acct==='cash'?'<span class="tx-acct">Efectivo</span>':''}</div>
     </div>
     <div class="tx-right">
       <div class="tx-amt ${cls}">${sign}${fmtFull(t.amt)}</div>
@@ -1617,6 +1700,7 @@ function openAddModal(){
   document.getElementById('dateInp').value=todayISO();
   document.getElementById('amtCurSym').textContent=sym();
   setType('e',true);
+  setAcct(lastAcct());
   updateAmtAlt();
   document.getElementById('addOv').classList.add('on');
   setTimeout(()=>document.getElementById('amtInp').focus(),400);
@@ -1629,9 +1713,11 @@ function setType(t,silent){
   document.getElementById('btnG').className='tbtn'+(t==='e'?' on eg':'');
   document.getElementById('btnI').className='tbtn'+(t==='i'?' on ei':'');
   renderCategoryPills(cats);
+  acctLblUpdate();
 }
 
 function setTypeG(){ setType('e'); }
+function acctLblUpdate(){ const el=document.getElementById('acctLbl'); if(el) el.textContent = currentType==='e' ? '¿Con qué pagaste?' : '¿Dónde lo recibiste?'; }
 function setTypeI(){ setType('i'); }
 
 function renderCategoryPills(cats){
@@ -1660,11 +1746,13 @@ function saveTransaction(){
     amt, date,
     desc: document.getElementById('descInp').value.trim()
   };
+  if(currentAcct==='cash') tx.acct = 'cash';
   if(editingTxId){
     const idx = transactions.findIndex(x=>x.id===editingTxId);
     if(idx>-1){
       const old = transactions[idx];
       transactions[idx] = {...old, type:tx.type, cat:tx.cat, amt:tx.amt, date:tx.date, desc:tx.desc};
+      if(tx.acct) transactions[idx].acct = 'cash'; else delete transactions[idx].acct;
     }
     editingTxId = null;
     save();
@@ -1838,10 +1926,11 @@ function clearAllData(){
 // ══════════════════════════════════════════════════════
 function exportCSV(){
   if(!transactions.length){showToast('⚠️ No hay movimientos');return;}
-  const rows=[['Fecha','Tipo','Categoría','Descripción','Monto','Moneda']];
+  const rows=[['Fecha','Tipo','Categoría','Descripción','Monto','Moneda','Cuenta']];
   transactions.forEach(t=>{
     const cat=getCat(t.type,t.cat);
-    rows.push([t.date, t.type==='e'?'Gasto':'Ingreso', cat.n, t.desc||'', t.amt.toFixed(2), prefs.cur]);
+    const cuenta = t.type==='t' ? (t.to==='bank' ? 'Efectivo → Banco' : 'Banco → Efectivo') : (t.acct==='cash' ? 'Efectivo' : 'Banco');
+    rows.push([t.date, t.type==='e'?'Gasto':t.type==='t'?'Transferencia':'Ingreso', cat.n, t.desc||'', t.amt.toFixed(2), prefs.cur, cuenta]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');
@@ -3177,6 +3266,7 @@ function onTxClick(id, el){
 function openEditTx(id){
   const t = transactions.find(x=>x.id===id);
   if(!t) return;
+  if(t.type==='t'){ openTransferModal(null, id); return; }
   editingTxId = id;
   setType(t.type, true);
   selectedCat = t.cat;
@@ -3186,6 +3276,7 @@ function openEditTx(id){
   document.getElementById('dateInp').value = t.date;
   document.getElementById('amtCurSym').textContent = sym();
   setAddModalMode(true);
+  setAcct(t.acct==='cash' ? 'cash' : 'bank');
   updateAmtAlt();
   document.getElementById('addOv').classList.add('on');
 }
@@ -3257,7 +3348,7 @@ function str(v, max){ return typeof v==='string' ? v.slice(0, max) : ''; }
 function sanitizeBackup(d){
   const out = {};
   out.transactions = (Array.isArray(d.transactions)?d.transactions:[])
-    .filter(t => t && typeof t==='object' && (t.type==='e'||t.type==='i')
+    .filter(t => t && typeof t==='object' && (t.type==='e'||t.type==='i'||(t.type==='t' && ((t.from==='cash'&&t.to==='bank')||(t.from==='bank'&&t.to==='cash'))))
                  && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && numOr(t.amt,0) > 0)
     .map(t => {
       const o = {
@@ -3268,6 +3359,8 @@ function sanitizeBackup(d){
       };
       if(t.recurId!=null && SAFE_ID.test(t.recurId)){ o.recurId = t.recurId; o.isRecurring = true; }
       if(t.isPay && /^\d{4}-\d{2}-\d{2}$/.test(t.payDate)){ o.isPay = true; o.payDate = t.payDate; }
+      if(t.acct==='cash' && t.type!=='t') o.acct = 'cash';
+      if(t.type==='t'){ o.from = t.from; o.to = t.to; o.cat = 'xfer'; }
       return o;
     });
 
@@ -3309,7 +3402,8 @@ function sanitizeBackup(d){
   out.income = (inc && typeof inc==='object' && numOr(inc.amt,0)>0 && ['w','q','m'].includes(inc.freq))
     ? {name: str(inc.name,40)||'Sueldo', amt: numOr(inc.amt,0), freq: inc.freq,
        wday: intIn(inc.wday,0,6) ?? 5, day: intIn(inc.day,1,31) || 1,
-       since: /^\d{4}-\d{2}-\d{2}$/.test(inc.since) ? inc.since : null}
+       since: /^\d{4}-\d{2}-\d{2}$/.test(inc.since) ? inc.since : null,
+       marked: Array.isArray(inc.marked) ? inc.marked.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).slice(0,500) : []}
     : null;
   const alt = d.prefs && CURRENCIES.find(c=>c.code===d.prefs.alt);
   out.prefs = cur ? {cur:cur.code, sym:cur.sym, curName:`${cur.flag} ${cur.name} (${cur.code})`, alt: alt ? alt.code : null} : null;
@@ -3364,6 +3458,230 @@ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hos
 
 
 // ══════════════════════════════════════════════════════
+//  v1.9 — BALANCE EN EFECTIVO
+// ══════════════════════════════════════════════════════
+let currentAcct = 'bank';
+const ACCT_KEY = 'finanzenacct_v1';
+function lastAcct(){ try{ return localStorage.getItem(ACCT_KEY)==='cash' ? 'cash' : 'bank'; }catch(e){ return 'bank'; } }
+
+function setAcct(a){
+  currentAcct = a==='cash' ? 'cash' : 'bank';
+  document.getElementById('acctBank').className = 'tbtn'+(currentAcct==='bank'?' on':'');
+  document.getElementById('acctCash').className = 'tbtn'+(currentAcct==='cash'?' on':'');
+  try{ localStorage.setItem(ACCT_KEY, currentAcct); }catch(e){}
+}
+
+// Efectivo acumulado hasta una fecha (incluida)
+function cashUpTo(iso){
+  return transactions.reduce((a,t)=>{
+    if(t.date > iso) return a;
+    if(t.type==='t') return a + (t.to==='cash' ? t.amt : t.from==='cash' ? -t.amt : 0);
+    if(t.acct==='cash') return a + (t.type==='i' ? t.amt : -t.amt);
+    return a;
+  }, 0);
+}
+function monthEndISO(y,m){ return isoOf(y, m, new Date(y, m+1, 0).getDate()); }
+function cashNow(){
+  // En el mes actual: efectivo a hoy. En otros meses: al cierre del mes que estás viendo.
+  const n = new Date();
+  const cur = viewDate.y===n.getFullYear() && viewDate.m===n.getMonth();
+  return cashUpTo(cur ? todayISO() : monthEndISO(viewDate.y, viewDate.m));
+}
+
+function xferHTML(t){
+  const dep = t.to==='bank';
+  const d = new Date(t.date+'T00:00:00');
+  return `<div class="tx" data-id="${t.id}" ontouchend="handleTxTouch(event,this)" onclick="onTxClick('${t.id}',this)">
+    <div class="tx-ico" style="background:#2E7D7B22">${dep?'🏦':'💵'}</div>
+    <div class="tx-info">
+      <div class="tx-name">${esc(t.desc) || (dep?'Depósito al banco':'Retiro a efectivo')}</div>
+      <div class="tx-cat">${dep?'Efectivo → Banco':'Banco → Efectivo'}</div>
+    </div>
+    <div class="tx-right">
+      <div class="tx-amt amt-x">⇄ ${fmtFull(t.amt)}</div>
+      <div class="tx-date">${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</div>
+    </div>
+    <button class="tx-del" onclick="event.stopPropagation();deleteById('${t.id}')">Eliminar</button>
+  </div>`;
+}
+
+function renderCashSection(txs){
+  const el = document.getElementById('cashSection');
+  const cash = cashNow();
+  const y = viewDate.y, m = viewDate.m;
+  const bank = totalBalanceUpTo(y, m) - cashUpTo(monthEndISO(y, m));
+  const spent = txs.filter(t=>t.type==='e' && t.acct==='cash').reduce((a,t)=>a+t.amt,0);
+  const recv  = txs.filter(t=>t.type==='i' && t.acct==='cash').reduce((a,t)=>a+t.amt,0);
+  const dep   = txs.filter(t=>t.type==='t' && t.to==='bank').reduce((a,t)=>a+t.amt,0);
+  const lastDep = transactions.filter(t=>t.type==='t' && t.to==='bank').sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const hasAny = transactions.some(t=>t.type==='t' || t.acct==='cash');
+  el.innerHTML = `<div class="recur-card">
+    <div class="recur-hdr">
+      <span class="recur-htitle">Dinero en mano</span>
+      <button class="recur-add-btn" onclick="openCashAdjust()">${hasAny?'Ajustar':'Registrar mi efectivo'}</button>
+    </div>
+    <div class="cash-main">
+      <div>
+        <div class="cash-amt${cash<0?' neg':''}">${cash<0?'-':''}${fmtFull(cash)}</div>
+        <div class="cash-alt">${cash ? altEq(cash) : ''}</div>
+        <div class="cash-sub">En banco: ${bank<0?'-':''}${fmtFull(bank)}</div>
+      </div>
+    </div>
+    <div class="cash-stats">
+      <div class="cash-stat"><div class="cash-stat-l">Gastado</div><div class="cash-stat-v">${fmt(spent)}</div></div>
+      <div class="cash-stat"><div class="cash-stat-l">Recibido</div><div class="cash-stat-v">${fmt(recv)}</div></div>
+      <div class="cash-stat"><div class="cash-stat-l">Depositado</div><div class="cash-stat-v">${fmt(dep)}</div></div>
+    </div>
+    <div class="cash-btns">
+      <button class="cash-btn pri" onclick="openTransferModal('dep')">🏦 Depositar al banco</button>
+      <button class="cash-btn sec" onclick="openTransferModal('wd')">💵 Retirar</button>
+    </div>
+    ${lastDep ? `<div class="cash-last">Último depósito: ${shortDate(lastDep.date)} · ${fmtFull(lastDep.amt)}</div>` : ''}
+  </div>`;
+}
+
+// ── Depositar / retirar ──
+let xfDir = 'dep', editingXfId = null;
+
+function openTransferModal(dir, editId){
+  editingXfId = editId || null;
+  const t = editId ? transactions.find(x=>x.id===editId) : null;
+  xfDir = t ? (t.to==='bank' ? 'dep' : 'wd') : (dir==='wd' ? 'wd' : 'dep');
+  document.getElementById('xfCurSym').textContent = sym();
+  document.getElementById('xfDate').value = t ? t.date : todayISO();
+  document.getElementById('xfNote').value = t ? (t.desc||'') : '';
+  document.getElementById('xfDelBtn').style.display = t ? 'block' : 'none';
+  setXfDir(xfDir, true);
+  const cash = cashUpTo(todayISO());
+  document.getElementById('xfAmt').value = t ? t.amt : (xfDir==='dep' && cash>0 ? Math.round(cash*100)/100 : '');
+  updateXfHint();
+  document.getElementById('xfOv').classList.add('on');
+}
+
+function setXfDir(d, keepAmt){
+  xfDir = d;
+  document.getElementById('xfDep').className = 'tbtn'+(d==='dep'?' on':'');
+  document.getElementById('xfWd').className  = 'tbtn'+(d==='wd'?' on':'');
+  const edit = !!editingXfId;
+  document.getElementById('xfTitle').textContent = edit ? 'Editar movimiento' : (d==='dep' ? 'Depositar al banco' : 'Retirar a efectivo');
+  document.getElementById('xfSaveBtn').textContent = edit ? 'Guardar cambios' : (d==='dep' ? 'Confirmar depósito' : 'Confirmar retiro');
+  if(!keepAmt && !edit){
+    const cash = cashUpTo(todayISO());
+    document.getElementById('xfAmt').value = (d==='dep' && cash>0) ? Math.round(cash*100)/100 : '';
+  }
+  updateXfHint();
+}
+
+function updateXfHint(){
+  const amt = parseFloat(document.getElementById('xfAmt').value) || 0;
+  const old = editingXfId ? transactions.find(x=>x.id===editingXfId) : null;
+  let cash = cashUpTo(todayISO());
+  if(old) cash += old.to==='bank' ? old.amt : -old.amt;          // sin contar el movimiento que editas
+  const after = xfDir==='dep' ? cash - amt : cash + amt;
+  const all = (xfDir==='dep' && cash>0 && Math.abs(amt-cash)>0.004) ? `<button class="xf-all" onclick="xfAll()">Todo (${fmtFull(cash)})</button>` : '';
+  document.getElementById('xfHint').innerHTML =
+    `Efectivo ahora: <b>${cash<0?'-':''}${fmtFull(cash)}</b>${all}<br>` +
+    (amt>0 ? `Te quedará: <span class="${after<0?'neg':''}">${after<0?'-':''}${fmtFull(after)}</span> en efectivo` : '');
+}
+function xfAll(){
+  const cash = cashUpTo(todayISO());
+  document.getElementById('xfAmt').value = Math.round(cash*100)/100;
+  updateXfHint();
+}
+
+function saveTransfer(){
+  const amt = parseFloat(document.getElementById('xfAmt').value);
+  if(!amt || amt<=0){ showToast('⚠️ Ingresa un monto válido'); return; }
+  const date = document.getElementById('xfDate').value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){ showToast('⚠️ Selecciona una fecha'); return; }
+  const data = { type:'t', cat:'xfer', amt, date,
+    from: xfDir==='dep' ? 'cash' : 'bank', to: xfDir==='dep' ? 'bank' : 'cash',
+    desc: document.getElementById('xfNote').value.trim() };
+  if(editingXfId){
+    const idx = transactions.findIndex(x=>x.id===editingXfId);
+    if(idx>-1) transactions[idx] = {...transactions[idx], ...data};
+    showToast('✏️ Movimiento actualizado');
+  } else {
+    transactions.unshift({id:newId(), ...data});
+    showToast(xfDir==='dep' ? `🏦 ${fmtFull(amt)} depositados al banco` : `💵 ${fmtFull(amt)} retirados a efectivo`);
+  }
+  editingXfId = null;
+  save();
+  document.getElementById('xfOv').classList.remove('on');
+  render();
+}
+
+function deleteEditingXf(){
+  const id = editingXfId;
+  if(!id) return;
+  showConfirm('🗑️','Eliminar movimiento','¿Eliminar este depósito o retiro?','Eliminar',()=>{
+    editingXfId = null;
+    document.getElementById('xfOv').classList.remove('on');
+    deleteById(id);
+  });
+}
+
+// ── Ajustar efectivo (contaste tu dinero) ──
+let cadjMode = 'from-bank';
+
+function openCashAdjust(){
+  document.getElementById('cadjCurSym').textContent = sym();
+  document.getElementById('cadjAmt').value = '';
+  const first = !transactions.some(t=>t.type==='t' || t.acct==='cash');
+  cadjMode = first ? 'from-bank' : 'expense';
+  updateCadjHint();
+  document.getElementById('cadjOv').classList.add('on');
+  setTimeout(()=>document.getElementById('cadjAmt').focus(), 400);
+}
+
+function setCadjMode(m){ cadjMode = m; updateCadjHint(); }
+
+function updateCadjHint(){
+  const cur = cashUpTo(todayISO());
+  const v = document.getElementById('cadjAmt').value;
+  const target = parseFloat(v);
+  const hint = document.getElementById('cadjHint'), opts = document.getElementById('cadjOpts');
+  if(v==='' || isNaN(target) || target<0){
+    hint.innerHTML = `Según Finanzen tienes <b>${cur<0?'-':''}${fmtFull(cur)}</b> en efectivo.`;
+    opts.innerHTML = ''; return;
+  }
+  const diff = Math.round((target-cur)*100)/100;
+  if(Math.abs(diff) < 0.005){ hint.innerHTML = '✅ Cuadra exacto con lo registrado.'; opts.innerHTML=''; return; }
+  const opt = (id, title, sub) => `<div class="cadj-opt${cadjMode===id?' on':''}" onclick="setCadjMode('${id}')"><span>${cadjMode===id?'🔘':'⚪'}</span><span><b>${title}</b><small>${sub}</small></span></div>`;
+  if(diff > 0){
+    if(!['from-bank','income'].includes(cadjMode)) cadjMode = 'from-bank';
+    hint.innerHTML = `Tienes <b>${fmtFull(diff)}</b> más de lo registrado. ¿De dónde salió?`;
+    opts.innerHTML =
+      opt('from-bank', 'Ya estaba en mi saldo', 'Lo cuenta como efectivo sin cambiar tu saldo total (por ejemplo, parte de tu capital).') +
+      opt('income', 'Es dinero nuevo', 'Se registra como ingreso en efectivo.');
+  } else {
+    if(!['expense','to-bank'].includes(cadjMode)) cadjMode = 'expense';
+    hint.innerHTML = `Tienes <b>${fmtFull(-diff)}</b> menos de lo registrado.`;
+    opts.innerHTML =
+      opt('expense', 'Gastos que no anoté', 'Se registra como gasto en efectivo (categoría Otros).') +
+      opt('to-bank', 'Lo deposité al banco', 'Se registra como depósito al banco.');
+  }
+}
+
+function saveCashAdjust(){
+  const v = document.getElementById('cadjAmt').value;
+  const target = parseFloat(v);
+  if(v==='' || isNaN(target) || target<0){ showToast('⚠️ Escribe cuánto efectivo tienes'); return; }
+  const diff = Math.round((target - cashUpTo(todayISO()))*100)/100;
+  document.getElementById('cadjOv').classList.remove('on');
+  if(Math.abs(diff) < 0.005){ showToast('✅ Tu efectivo cuadra'); return; }
+  const base = {id:newId(), date:todayISO(), amt:Math.abs(diff)};
+  let tx;
+  if(diff > 0 && cadjMode==='income')        tx = {...base, type:'i', cat:'other', acct:'cash', desc:'Ajuste de efectivo'};
+  else if(diff > 0)                          tx = {...base, type:'t', cat:'xfer', from:'bank', to:'cash', desc:'Efectivo que ya tenía'};
+  else if(cadjMode==='to-bank')              tx = {...base, type:'t', cat:'xfer', from:'cash', to:'bank', desc:'Depósito al banco'};
+  else                                       tx = {...base, type:'e', cat:'other', acct:'cash', desc:'Gastos en efectivo sin anotar'};
+  transactions.unshift(tx);
+  save(); render();
+  showToast(`👛 Efectivo actualizado: ${fmtFull(target)}`);
+}
+
+// ══════════════════════════════════════════════════════
 //  v1.6 — MI INGRESO (semanal / quincenal / mensual)
 // ══════════════════════════════════════════════════════
 const INCOME_KEY = 'finanzeninc_v1';
@@ -3399,7 +3717,7 @@ function shortDate(iso){
 // Saldo acumulado: todos los movimientos hasta el último día del mes indicado
 function totalBalanceUpTo(y, m){
   const lastISO = isoOf(y, m, new Date(y, m+1, 0).getDate());
-  return transactions.reduce((a,t)=> t.date<=lastISO ? a + (t.type==='i' ? t.amt : -t.amt) : a, 0);
+  return transactions.reduce((a,t)=> (t.date<=lastISO && t.type!=='t') ? a + (t.type==='i' ? t.amt : -t.amt) : a, 0);
 }
 
 function renderTotalBalance(){
@@ -3439,22 +3757,29 @@ function renderIncomeSection(txs){
     return;
   }
   const y = viewDate.y, m = viewDate.m, today = todayISO();
-  const days = paydays(y, m);
+  // Pagos del mes desde "contar desde", más los anteriores que ya habías palomeado
+  const days = paydays(y, m, {...income, since:null})
+    .filter(d => !income.since || d >= income.since || getPayTx(d) || isMarkedPay(d));
   let expected = 0, received = 0, pendingPay = 0, paidCount = 0;
 
   const items = days.map(date=>{
     const tx = getPayTx(date);
+    const marked = !tx && isMarkedPay(date);
+    const done = !!tx || marked;
     const amt = tx ? tx.amt : income.amt;
     expected += amt;
-    if(tx){ received += tx.amt; paidCount++; } else pendingPay += income.amt;
+    if(done){ received += amt; paidCount++; } else pendingPay += income.amt;
     const d = new Date(date+'T00:00:00');
     const lbl = `${WD_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
-    const future = !tx && date > today;
-    const sub = tx ? 'Cobrado' : future ? 'Próximo pago' : 'Pendiente de registrar';
+    const future = !done && date > today;
+    const sub = tx ? 'Cobrado' : marked ? 'Ya estaba en tu saldo' : future ? 'Próximo pago' : 'Pendiente de registrar';
     const right = tx
       ? `<div class="paid-badge">✓ Cobrado</div><button class="unpay-btn" onclick="unPay('${date}')">deshacer</button>`
-      : `<button class="pay-btn" onclick="markPay('${date}')">Registrar cobro</button>`;
-    return `<div class="recur-item${tx?' is-paid':''}${future?' is-future':''}">
+      : marked
+        ? `<div class="paid-badge">✓ Ya registrado</div><button class="unpay-btn" onclick="unmarkPay('${date}')">deshacer</button>`
+        : `<button class="pay-btn" onclick="markPay('${date}')">Registrar cobro</button>
+           <button class="unpay-btn" onclick="markPayRegistered('${date}')">ya registrado</button>`;
+    return `<div class="recur-item${done?' is-paid':''}${future?' is-future':''}">
       <div class="ri-ico" style="background:#2F8F6B22">💵</div>
       <div class="ri-info">
         <div class="ri-name">${lbl} · ${esc(income.name)}</div>
@@ -3472,6 +3797,7 @@ function renderIncomeSection(txs){
   const left = totalBalanceUpTo(y, m) + pendingPay - recurPend;
   const sinceNote = (income.since && income.since.slice(0,7)===isoOf(y,m,1).slice(0,7))
     ? ` Los pagos antes del ${shortDate(income.since)} no se cuentan porque ya están en tu saldo.` : '';
+  const markNote = ' “Ya registrado” palomea un pago sin volver a sumarlo.';
 
   el.innerHTML = `<div class="recur-card">
     <div class="recur-hdr">
@@ -3483,9 +3809,26 @@ function renderIncomeSection(txs){
       <div class="rst"><div class="rst-lbl">Cobrado</div><div class="rst-val rv-paid">${fmt(received)}</div></div>
       <div class="rst"><div class="rst-lbl">Te queda</div><div class="rst-val rv-left${left<0?' neg':''}">${left<0?'-':''}${fmt(Math.abs(left))}</div></div>
     </div>
-    <div class="inc-note">“Te queda” = tu saldo total + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}</div>
+    <div class="inc-note">“Te queda” = tu saldo total + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}${markNote}</div>
     ${items || `<div class="recur-empty">Tus pagos empiezan a contar desde el ${shortDate(income.since)}.</div>`}
   </div>`;
+}
+
+function isMarkedPay(date){ return !!(income && Array.isArray(income.marked) && income.marked.includes(date)); }
+
+// Palomear un pago como recibido SIN crear otro ingreso (el dinero ya está en tu saldo)
+function markPayRegistered(date){
+  if(!income || getPayTx(date) || isMarkedPay(date)) return;
+  income.marked = [...(income.marked||[]), date].sort();
+  saveInc(); render();
+  showToast('✓ Marcado como ya registrado');
+}
+
+function unmarkPay(date){
+  if(!income || !Array.isArray(income.marked)) return;
+  income.marked = income.marked.filter(d=>d!==date);
+  saveInc(); render();
+  showToast('↩️ Marca quitada');
 }
 
 function markPay(date){
@@ -3582,7 +3925,8 @@ function saveIncome(){
   income = {
     name: document.getElementById('incName').value.trim() || 'Sueldo',
     amt, freq: incDraft.freq, wday: incDraft.wday, day: incDraft.day,
-    since: /^\d{4}-\d{2}-\d{2}$/.test(document.getElementById('incSince').value) ? document.getElementById('incSince').value : null
+    since: /^\d{4}-\d{2}-\d{2}$/.test(document.getElementById('incSince').value) ? document.getElementById('incSince').value : null,
+    marked: income && Array.isArray(income.marked) ? income.marked : []
   };
   saveInc();
   document.getElementById('incOv').classList.remove('on');
