@@ -1,5 +1,5 @@
 // FinanZen — service worker (modo sin conexión)
-const CACHE = 'finanzen-v1.8';
+const CACHE = 'finanzen-v1.9';
 const CORE = [
   './FinanZen.html',
   './manifest.webmanifest',
