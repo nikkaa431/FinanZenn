@@ -487,6 +487,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .plan-empty{text-align:center;padding:30px 20px;color:var(--m);font-size:13px}
 
 
+/* ===== v1.9.3: saldo total bancario ===== */
+.bal-bank{margin:14px -20px -16px;padding:14px 20px 16px;background:var(--pd);color:#fff;border-radius:0 0 20px 20px}
+.bal-bank-lbl{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;opacity:.85}
+.bal-bank-ico{display:flex;width:18px;height:18px}
+.bal-bank-ico svg{width:18px;height:18px}
+.bal-bank-amt{font-size:30px;font-weight:700;letter-spacing:-.8px;margin-top:4px;line-height:1.1}
+.bal-bank-alt{font-size:12.5px;font-weight:600;opacity:.8;margin-top:3px}
+.bal-bank-alt:empty{display:none}
+@media (prefers-color-scheme: dark){ .bal-bank{background:#24585E} }
 /* ===== v1.9: efectivo ===== */
 .cash-main{padding:16px 16px 6px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
 .cash-amt{font-size:28px;font-weight:700;color:var(--ink);letter-spacing:-.6px;line-height:1.1}
@@ -622,7 +631,11 @@ body.on-home .fab{display:none}
     <div class="bal-code" id="balCode">MXN</div>
     <div class="bal-alt" id="balAlt"></div>
     <div class="bal-sub" id="balSub">Sin movimientos este mes</div>
-    <div class="bal-total" id="balTotal"></div>
+    <div class="bal-bank" id="balBank">
+      <div class="bal-bank-lbl"><span class="bal-bank-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span><span id="balBankLbl">Saldo total bancario</span></div>
+      <div class="bal-bank-amt" id="balTotal"></div>
+      <div class="bal-bank-alt" id="balBankAlt"></div>
+    </div>
   </div>
 </div>
 
@@ -784,7 +797,7 @@ body.on-home .fab{display:none}
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      Finanzen v1.9.2 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
+      Finanzen v1.9.3 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -1931,7 +1944,7 @@ function exportCSV(){
   const rows=[['Fecha','Tipo','Categoría','Descripción','Monto','Moneda','Cuenta']];
   transactions.forEach(t=>{
     const cat=getCat(t.type,t.cat);
-    const cuenta = t.type==='t' ? (t.to==='bank' ? 'Efectivo → Saldo total' : 'Saldo total → Efectivo') : (t.acct==='cash' ? 'Efectivo' : 'Banco');
+    const cuenta = t.type==='t' ? (t.to==='bank' ? 'Efectivo → Saldo bancario' : 'Saldo bancario → Efectivo') : (t.acct==='cash' ? 'Efectivo' : 'Banco');
     rows.push([t.date, t.type==='e'?'Gasto':t.type==='t'?'Transferencia':'Ingreso', cat.n, t.desc||'', t.amt.toFixed(2), prefs.cur, cuenta]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -3497,7 +3510,7 @@ function xferHTML(t){
     <div class="tx-ico" style="background:#2E7D7B22">${dep?'🏦':'💵'}</div>
     <div class="tx-info">
       <div class="tx-name">${esc(t.desc) || (dep?'Transferencia a total':'Retiro a efectivo')}</div>
-      <div class="tx-cat">${dep?'Efectivo → Saldo total':'Saldo total → Efectivo'}</div>
+      <div class="tx-cat">${dep?'Efectivo → Saldo bancario':'Saldo bancario → Efectivo'}</div>
     </div>
     <div class="tx-right">
       <div class="tx-amt amt-x">⇄ ${fmtFull(t.amt)}</div>
@@ -3526,7 +3539,7 @@ function renderCashSection(txs){
       <div>
         <div class="cash-amt${cash<0?' neg':''}">${cash<0?'-':''}${fmtFull(cash)}</div>
         <div class="cash-alt">${cash ? altEq(cash) : ''}</div>
-        <div class="cash-sub">Saldo total: ${main<0?'-':''}${fmtFull(main)}</div>
+        <div class="cash-sub">Saldo total bancario: ${main<0?'-':''}${fmtFull(main)}</div>
       </div>
     </div>
     <div class="cash-stats">
@@ -3547,11 +3560,11 @@ function transferAllCash(){
   const cash = Math.round(cashUpTo(todayISO())*100)/100;
   if(cash <= 0){ showToast('👛 No tienes efectivo para transferir'); return; }
   showConfirm('⇄', 'Transferir a total',
-    `Se pasarán ${fmtFull(cash)} de tu efectivo a tu saldo total. Tu efectivo quedará en $0.00.`,
+    `Se pasarán ${fmtFull(cash)} de tu efectivo a tu saldo total bancario. Tu efectivo quedará en $0.00.`,
     'Transferir', ()=>{
       transactions.unshift({id:newId(), type:'t', cat:'xfer', amt:cash, date:todayISO(), from:'cash', to:'bank', desc:''});
       save(); render();
-      showToast(`⇄ ${fmtFull(cash)} transferidos a tu saldo total`);
+      showToast(`⇄ ${fmtFull(cash)} transferidos a tu saldo bancario`);
     }, true);
 }
 
@@ -3618,7 +3631,7 @@ function saveTransfer(){
     showToast('✏️ Movimiento actualizado');
   } else {
     transactions.unshift({id:newId(), ...data});
-    showToast(xfDir==='dep' ? `⇄ ${fmtFull(amt)} transferidos a tu saldo total` : `💵 ${fmtFull(amt)} retirados a efectivo`);
+    showToast(xfDir==='dep' ? `⇄ ${fmtFull(amt)} transferidos a tu saldo bancario` : `💵 ${fmtFull(amt)} retirados a efectivo`);
   }
   editingXfId = null;
   save();
@@ -3667,14 +3680,14 @@ function updateCadjHint(){
     if(!['from-bank','income'].includes(cadjMode)) cadjMode = 'from-bank';
     hint.innerHTML = `Tienes <b>${fmtFull(diff)}</b> más de lo registrado. ¿De dónde salió?`;
     opts.innerHTML =
-      opt('from-bank', 'Ya estaba en mi saldo', 'Se pasa de tu saldo total a efectivo (por ejemplo, parte de tu capital).') +
+      opt('from-bank', 'Ya estaba en mi saldo', 'Se pasa de tu saldo bancario a efectivo (por ejemplo, parte de tu capital).') +
       opt('income', 'Es dinero nuevo', 'Se registra como ingreso en efectivo.');
   } else {
     if(!['expense','to-bank'].includes(cadjMode)) cadjMode = 'expense';
     hint.innerHTML = `Tienes <b>${fmtFull(-diff)}</b> menos de lo registrado.`;
     opts.innerHTML =
       opt('expense', 'Gastos que no anoté', 'Se registra como gasto en efectivo (categoría Otros).') +
-      opt('to-bank', 'Lo transferí a mi total', 'Se registra como transferencia a tu saldo total.');
+      opt('to-bank', 'Lo transferí a mi total', 'Se registra como transferencia a tu saldo bancario.');
   }
 }
 
@@ -3740,12 +3753,16 @@ function mainBalanceUpTo(y, m){ return totalBalanceUpTo(y, m) - cashUpTo(monthEn
 
 function renderTotalBalance(){
   const el = document.getElementById('balTotal');
-  if(!transactions.length){ el.textContent=''; return; }
+  const box = document.getElementById('balBank');
+  if(!transactions.length){ box.style.display='none'; el.textContent=''; return; }
+  box.style.display='';
   const y = viewDate.y, m = viewDate.m;
   const tot = mainBalanceUpTo(y, m);
   const now = new Date();
   const past = y < now.getFullYear() || (y===now.getFullYear() && m < now.getMonth());
-  el.textContent = `💰 Saldo total${past ? ' al cierre de '+MONTHS_ES[m] : ''}: ${tot<0?'-':''}${fmtFull(tot)}`;
+  document.getElementById('balBankLbl').textContent = 'Saldo total bancario' + (past ? ' al cierre de '+MONTHS_ES[m] : '');
+  el.textContent = `${tot<0?'-':''}${fmtFull(tot)}`;
+  document.getElementById('balBankAlt').textContent = tot ? altEq(tot) : '';
 }
 
 function monthlyAvg(cfg){
@@ -3827,7 +3844,7 @@ function renderIncomeSection(txs){
       <div class="rst"><div class="rst-lbl">Cobrado</div><div class="rst-val rv-paid">${fmt(received)}</div></div>
       <div class="rst"><div class="rst-lbl">Te queda</div><div class="rst-val rv-left${left<0?' neg':''}">${left<0?'-':''}${fmt(Math.abs(left))}</div></div>
     </div>
-    <div class="inc-note">“Te queda” = tu saldo total + efectivo + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}${markNote}</div>
+    <div class="inc-note">“Te queda” = tu saldo bancario + efectivo + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}${markNote}</div>
     ${items || `<div class="recur-empty">Tus pagos empiezan a contar desde el ${shortDate(income.since)}.</div>`}
   </div>`;
 }
