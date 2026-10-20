@@ -224,6 +224,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cbtn{flex:1;padding:13px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
 .cbtn.cancel{background:var(--bg);color:var(--t)}
 .cbtn.danger{background:var(--r);color:#fff}
+.cbtn.danger.safe{background:var(--pd)}
 
 /* Budget modal selects */
 .bcat-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
@@ -783,7 +784,7 @@ body.on-home .fab{display:none}
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      Finanzen v1.9.1 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
+      Finanzen v1.9.2 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -1130,7 +1131,7 @@ body.on-home .fab{display:none}
     <div class="mhandle"></div>
     <div class="mtitle" id="xfTitle">Mover efectivo</div>
     <div class="ttog">
-      <button class="tbtn" id="xfDep" onclick="setXfDir('dep')">🏦 Depositar al banco</button>
+      <button class="tbtn" id="xfDep" onclick="setXfDir('dep')">⇄ Transferir a total</button>
       <button class="tbtn" id="xfWd" onclick="setXfDir('wd')">💵 Retirar a efectivo</button>
     </div>
     <div class="amtwrap" style="margin-bottom:8px;padding:10px 0">
@@ -1142,7 +1143,7 @@ body.on-home .fab{display:none}
     <input class="finp" id="xfDate" type="date">
     <label class="flbl">Nota (opcional)</label>
     <input class="finp" id="xfNote" type="text" maxlength="60" placeholder="Ej: Depósito en ventanilla">
-    <button class="sbtn" id="xfSaveBtn" onclick="saveTransfer()">Confirmar depósito</button>
+    <button class="sbtn" id="xfSaveBtn" onclick="saveTransfer()">Confirmar transferencia</button>
     <button class="dbtn" id="xfDelBtn" onclick="deleteEditingXf()" style="display:none">🗑️ Eliminar movimiento</button>
   </div>
 </div>
@@ -1890,7 +1891,8 @@ function closeModal(e,id){
 // ══════════════════════════════════════════════════════
 let _confirmPending = null;
 
-function showConfirm(ico, title, msg, okLabel, fn){
+function showConfirm(ico, title, msg, okLabel, fn, safe){
+  document.getElementById('confirmOkBtn').classList.toggle('safe', !!safe);
   document.getElementById('confirmIco').textContent  = ico;
   document.getElementById('confirmTitle').textContent = title;
   document.getElementById('confirmMsg').textContent   = msg;
@@ -1929,7 +1931,7 @@ function exportCSV(){
   const rows=[['Fecha','Tipo','Categoría','Descripción','Monto','Moneda','Cuenta']];
   transactions.forEach(t=>{
     const cat=getCat(t.type,t.cat);
-    const cuenta = t.type==='t' ? (t.to==='bank' ? 'Efectivo → Banco' : 'Banco → Efectivo') : (t.acct==='cash' ? 'Efectivo' : 'Banco');
+    const cuenta = t.type==='t' ? (t.to==='bank' ? 'Efectivo → Saldo total' : 'Saldo total → Efectivo') : (t.acct==='cash' ? 'Efectivo' : 'Banco');
     rows.push([t.date, t.type==='e'?'Gasto':t.type==='t'?'Transferencia':'Ingreso', cat.n, t.desc||'', t.amt.toFixed(2), prefs.cur, cuenta]);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -3494,8 +3496,8 @@ function xferHTML(t){
   return `<div class="tx" data-id="${t.id}" ontouchend="handleTxTouch(event,this)" onclick="onTxClick('${t.id}',this)">
     <div class="tx-ico" style="background:#2E7D7B22">${dep?'🏦':'💵'}</div>
     <div class="tx-info">
-      <div class="tx-name">${esc(t.desc) || (dep?'Depósito al banco':'Retiro a efectivo')}</div>
-      <div class="tx-cat">${dep?'Efectivo → Banco':'Banco → Efectivo'}</div>
+      <div class="tx-name">${esc(t.desc) || (dep?'Transferencia a total':'Retiro a efectivo')}</div>
+      <div class="tx-cat">${dep?'Efectivo → Saldo total':'Saldo total → Efectivo'}</div>
     </div>
     <div class="tx-right">
       <div class="tx-amt amt-x">⇄ ${fmtFull(t.amt)}</div>
@@ -3509,7 +3511,7 @@ function renderCashSection(txs){
   const el = document.getElementById('cashSection');
   const cash = cashNow();
   const y = viewDate.y, m = viewDate.m;
-  const bank = totalBalanceUpTo(y, m) - cashUpTo(monthEndISO(y, m));
+  const main = mainBalanceUpTo(y, m);
   const spent = txs.filter(t=>t.type==='e' && t.acct==='cash').reduce((a,t)=>a+t.amt,0);
   const recv  = txs.filter(t=>t.type==='i' && t.acct==='cash').reduce((a,t)=>a+t.amt,0);
   const dep   = txs.filter(t=>t.type==='t' && t.to==='bank').reduce((a,t)=>a+t.amt,0);
@@ -3524,23 +3526,36 @@ function renderCashSection(txs){
       <div>
         <div class="cash-amt${cash<0?' neg':''}">${cash<0?'-':''}${fmtFull(cash)}</div>
         <div class="cash-alt">${cash ? altEq(cash) : ''}</div>
-        <div class="cash-sub">En banco: ${bank<0?'-':''}${fmtFull(bank)}</div>
+        <div class="cash-sub">Saldo total: ${main<0?'-':''}${fmtFull(main)}</div>
       </div>
     </div>
     <div class="cash-stats">
       <div class="cash-stat"><div class="cash-stat-l">Gastado</div><div class="cash-stat-v">${fmt(spent)}</div></div>
       <div class="cash-stat"><div class="cash-stat-l">Recibido</div><div class="cash-stat-v">${fmt(recv)}</div></div>
-      <div class="cash-stat"><div class="cash-stat-l">Depositado</div><div class="cash-stat-v">${fmt(dep)}</div></div>
+      <div class="cash-stat"><div class="cash-stat-l">Transferido</div><div class="cash-stat-v">${fmt(dep)}</div></div>
     </div>
     <div class="cash-btns">
-      <button class="cash-btn pri" onclick="openTransferModal('dep')">🏦 Depositar al banco</button>
+      <button class="cash-btn pri" onclick="transferAllCash()">⇄ Transferir a total</button>
       <button class="cash-btn sec" onclick="openTransferModal('wd')">💵 Retirar</button>
     </div>
-    ${lastDep ? `<div class="cash-last">Último depósito: ${shortDate(lastDep.date)} · ${fmtFull(lastDep.amt)}</div>` : ''}
+    ${lastDep ? `<div class="cash-last">Última transferencia: ${shortDate(lastDep.date)} · ${fmtFull(lastDep.amt)}</div>` : ''}
   </div>`;
 }
 
-// ── Depositar / retirar ──
+// ── Transferir todo el efectivo al saldo total ──
+function transferAllCash(){
+  const cash = Math.round(cashUpTo(todayISO())*100)/100;
+  if(cash <= 0){ showToast('👛 No tienes efectivo para transferir'); return; }
+  showConfirm('⇄', 'Transferir a total',
+    `Se pasarán ${fmtFull(cash)} de tu efectivo a tu saldo total. Tu efectivo quedará en $0.00.`,
+    'Transferir', ()=>{
+      transactions.unshift({id:newId(), type:'t', cat:'xfer', amt:cash, date:todayISO(), from:'cash', to:'bank', desc:''});
+      save(); render();
+      showToast(`⇄ ${fmtFull(cash)} transferidos a tu saldo total`);
+    }, true);
+}
+
+// ── Transferir / retirar (monto a elegir) ──
 let xfDir = 'dep', editingXfId = null;
 
 function openTransferModal(dir, editId){
@@ -3563,8 +3578,8 @@ function setXfDir(d, keepAmt){
   document.getElementById('xfDep').className = 'tbtn'+(d==='dep'?' on':'');
   document.getElementById('xfWd').className  = 'tbtn'+(d==='wd'?' on':'');
   const edit = !!editingXfId;
-  document.getElementById('xfTitle').textContent = edit ? 'Editar movimiento' : (d==='dep' ? 'Depositar al banco' : 'Retirar a efectivo');
-  document.getElementById('xfSaveBtn').textContent = edit ? 'Guardar cambios' : (d==='dep' ? 'Confirmar depósito' : 'Confirmar retiro');
+  document.getElementById('xfTitle').textContent = edit ? 'Editar movimiento' : (d==='dep' ? 'Transferir a total' : 'Retirar a efectivo');
+  document.getElementById('xfSaveBtn').textContent = edit ? 'Guardar cambios' : (d==='dep' ? 'Confirmar transferencia' : 'Confirmar retiro');
   if(!keepAmt && !edit){
     const cash = cashUpTo(todayISO());
     document.getElementById('xfAmt').value = (d==='dep' && cash>0) ? Math.round(cash*100)/100 : '';
@@ -3603,7 +3618,7 @@ function saveTransfer(){
     showToast('✏️ Movimiento actualizado');
   } else {
     transactions.unshift({id:newId(), ...data});
-    showToast(xfDir==='dep' ? `🏦 ${fmtFull(amt)} depositados al banco` : `💵 ${fmtFull(amt)} retirados a efectivo`);
+    showToast(xfDir==='dep' ? `⇄ ${fmtFull(amt)} transferidos a tu saldo total` : `💵 ${fmtFull(amt)} retirados a efectivo`);
   }
   editingXfId = null;
   save();
@@ -3614,7 +3629,7 @@ function saveTransfer(){
 function deleteEditingXf(){
   const id = editingXfId;
   if(!id) return;
-  showConfirm('🗑️','Eliminar movimiento','¿Eliminar este depósito o retiro?','Eliminar',()=>{
+  showConfirm('🗑️','Eliminar movimiento','¿Eliminar esta transferencia o retiro?','Eliminar',()=>{
     editingXfId = null;
     document.getElementById('xfOv').classList.remove('on');
     deleteById(id);
@@ -3652,14 +3667,14 @@ function updateCadjHint(){
     if(!['from-bank','income'].includes(cadjMode)) cadjMode = 'from-bank';
     hint.innerHTML = `Tienes <b>${fmtFull(diff)}</b> más de lo registrado. ¿De dónde salió?`;
     opts.innerHTML =
-      opt('from-bank', 'Ya estaba en mi saldo', 'Lo cuenta como efectivo sin cambiar tu saldo total (por ejemplo, parte de tu capital).') +
+      opt('from-bank', 'Ya estaba en mi saldo', 'Se pasa de tu saldo total a efectivo (por ejemplo, parte de tu capital).') +
       opt('income', 'Es dinero nuevo', 'Se registra como ingreso en efectivo.');
   } else {
     if(!['expense','to-bank'].includes(cadjMode)) cadjMode = 'expense';
     hint.innerHTML = `Tienes <b>${fmtFull(-diff)}</b> menos de lo registrado.`;
     opts.innerHTML =
       opt('expense', 'Gastos que no anoté', 'Se registra como gasto en efectivo (categoría Otros).') +
-      opt('to-bank', 'Lo deposité al banco', 'Se registra como depósito al banco.');
+      opt('to-bank', 'Lo transferí a mi total', 'Se registra como transferencia a tu saldo total.');
   }
 }
 
@@ -3674,7 +3689,7 @@ function saveCashAdjust(){
   let tx;
   if(diff > 0 && cadjMode==='income')        tx = {...base, type:'i', cat:'other', acct:'cash', desc:'Ajuste de efectivo'};
   else if(diff > 0)                          tx = {...base, type:'t', cat:'xfer', from:'bank', to:'cash', desc:'Efectivo que ya tenía'};
-  else if(cadjMode==='to-bank')              tx = {...base, type:'t', cat:'xfer', from:'cash', to:'bank', desc:'Depósito al banco'};
+  else if(cadjMode==='to-bank')              tx = {...base, type:'t', cat:'xfer', from:'cash', to:'bank', desc:'Transferencia a total'};
   else                                       tx = {...base, type:'e', cat:'other', acct:'cash', desc:'Gastos en efectivo sin anotar'};
   transactions.unshift(tx);
   save(); render();
@@ -3720,11 +3735,14 @@ function totalBalanceUpTo(y, m){
   return transactions.reduce((a,t)=> (t.date<=lastISO && t.type!=='t') ? a + (t.type==='i' ? t.amt : -t.amt) : a, 0);
 }
 
+// Saldo total = todo menos el efectivo (el efectivo se lleva aparte hasta que lo transfieres)
+function mainBalanceUpTo(y, m){ return totalBalanceUpTo(y, m) - cashUpTo(monthEndISO(y, m)); }
+
 function renderTotalBalance(){
   const el = document.getElementById('balTotal');
   if(!transactions.length){ el.textContent=''; return; }
   const y = viewDate.y, m = viewDate.m;
-  const tot = totalBalanceUpTo(y, m);
+  const tot = mainBalanceUpTo(y, m);
   const now = new Date();
   const past = y < now.getFullYear() || (y===now.getFullYear() && m < now.getMonth());
   el.textContent = `💰 Saldo total${past ? ' al cierre de '+MONTHS_ES[m] : ''}: ${tot<0?'-':''}${fmtFull(tot)}`;
@@ -3794,7 +3812,7 @@ function renderIncomeSection(txs){
 
   // Te queda = ingresos del mes (cobrados + por cobrar) − gastos del mes − gastos fijos pendientes
   const recurPend = recurring.filter(r=>!getRecurTx(r.id,y,m)).reduce((a,r)=>a+r.amt,0);
-  const left = totalBalanceUpTo(y, m) + pendingPay - recurPend;
+  const left = totalBalanceUpTo(y, m) + pendingPay - recurPend;   // saldo total + efectivo
   const sinceNote = (income.since && income.since.slice(0,7)===isoOf(y,m,1).slice(0,7))
     ? ` Los pagos antes del ${shortDate(income.since)} no se cuentan porque ya están en tu saldo.` : '';
   const markNote = ' “Ya registrado” palomea un pago sin volver a sumarlo.';
@@ -3809,7 +3827,7 @@ function renderIncomeSection(txs){
       <div class="rst"><div class="rst-lbl">Cobrado</div><div class="rst-val rv-paid">${fmt(received)}</div></div>
       <div class="rst"><div class="rst-lbl">Te queda</div><div class="rst-val rv-left${left<0?' neg':''}">${left<0?'-':''}${fmt(Math.abs(left))}</div></div>
     </div>
-    <div class="inc-note">“Te queda” = tu saldo total + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}${markNote}</div>
+    <div class="inc-note">“Te queda” = tu saldo total + efectivo + pagos por cobrar − gastos fijos pendientes${recurPend?` (${fmtFull(recurPend)})`:''}.${sinceNote}${markNote}</div>
     ${items || `<div class="recur-empty">Tus pagos empiezan a contar desde el ${shortDate(income.since)}.</div>`}
   </div>`;
 }
