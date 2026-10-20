@@ -1,5 +1,5 @@
 // FinanZen — service worker (modo sin conexión)
-const CACHE = 'finanzen-v1.4';
+const CACHE = 'finanzen-v1.8';
 const CORE = [
   './FinanZen.html',
   './manifest.webmanifest',
@@ -24,6 +24,9 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  // Tipos de cambio: siempre de la red (la app guarda su propia copia).
+  if (url.hostname.endsWith('er-api.com')) return;
 
   // La app (HTML): primero red para recibir actualizaciones; si no hay internet, la copia guardada.
   if (req.mode === 'navigate' || (url.origin === location.origin && url.pathname.endsWith('.html'))) {
