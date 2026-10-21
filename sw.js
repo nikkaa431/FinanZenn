@@ -1,5 +1,5 @@
 // FinanZen — service worker (modo sin conexión)
-const CACHE = 'finanzen-v1.9.3';
+const CACHE = 'finanzen-v1.9.5';
 const CORE = [
   './FinanZen.html',
   './manifest.webmanifest',
@@ -31,8 +31,9 @@ self.addEventListener('fetch', e => {
   // La app (HTML): primero red para recibir actualizaciones; si no hay internet, la copia guardada.
   if (req.mode === 'navigate' || (url.origin === location.origin && url.pathname.endsWith('.html'))) {
     e.respondWith(
-      fetch(req)
-        .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); return res; })
+      // cache:'no-cache' = siempre pregunta a GitHub si hay versión nueva (no usa la copia de 10 min del navegador)
+      fetch(url.href, {cache: 'no-cache', credentials: 'same-origin'})
+        .then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
         .catch(() => caches.match(req, {ignoreSearch: true}).then(r => r || caches.match('./FinanZen.html')))
     );
     return;

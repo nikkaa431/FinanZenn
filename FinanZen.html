@@ -511,6 +511,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cash-btn{flex:1;border:none;border-radius:12px;padding:12px 8px;font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer}
 .cash-btn.pri{background:var(--pd);color:#fff}
 .cash-btn.sec{background:var(--card2);color:var(--ink)}
+.cash-btn.add{background:rgba(47,143,107,.13);color:var(--g)}
 .cash-btn:active{transform:scale(.98)}
 .cash-last{font-size:11.5px;color:var(--m);padding:0 16px 14px;margin-top:-4px}
 .xf-hint{text-align:center;font-size:13px;color:var(--m);margin:0 0 14px;line-height:1.45}
@@ -797,7 +798,7 @@ body.on-home .fab{display:none}
     </div>
 
     <div style="text-align:center;color:var(--m);font-size:12px;margin-top:20px">
-      Finanzen v1.9.3 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
+      Finanzen v1.9.5 · Tus finanzas, en calma<br><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener" style="color:var(--m)">Tipos de cambio por Exchange Rate API</a>
     </div>
   </div>
 </div>
@@ -3266,6 +3267,7 @@ function cssVar(name){
 let editingTxId = null;
 
 function setAddModalMode(edit){
+  document.getElementById('descInp').placeholder = '¿En qué gastaste?';
   document.getElementById('modalTitle').textContent = edit ? 'Editar movimiento' : 'Nuevo movimiento';
   document.getElementById('addSaveBtn').textContent = edit ? 'Guardar cambios' : 'Guardar movimiento';
   document.getElementById('addDelBtn').style.display = edit ? 'block' : 'none';
@@ -3468,7 +3470,19 @@ try{
 }catch(e){}
 
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
-  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  const hadController = !!navigator.serviceWorker.controller;
+  let swReloading = false;
+  // Cuando se instala una versión nueva de la app, recarga una vez para mostrarla
+  navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+    if(!hadController || swReloading) return;
+    swReloading = true; location.reload();
+  });
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).then(reg=>{
+      // Busca actualizaciones cada vez que vuelves a la app
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
+    }).catch(()=>{});
+  });
 }
 
 
@@ -3548,11 +3562,26 @@ function renderCashSection(txs){
       <div class="cash-stat"><div class="cash-stat-l">Transferido</div><div class="cash-stat-v">${fmt(dep)}</div></div>
     </div>
     <div class="cash-btns">
+      <button class="cash-btn add" onclick="openCashIncome()">＋ Sumar efectivo</button>
+      <button class="cash-btn sec" onclick="openTransferModal('wd')">💵 Retirar del banco</button>
+    </div>
+    <div class="cash-btns" style="padding-top:0">
       <button class="cash-btn pri" onclick="transferAllCash()">⇄ Transferir a total</button>
-      <button class="cash-btn sec" onclick="openTransferModal('wd')">💵 Retirar</button>
     </div>
     ${lastDep ? `<div class="cash-last">Última transferencia: ${shortDate(lastDep.date)} · ${fmtFull(lastDep.amt)}</div>` : ''}
   </div>`;
+}
+
+// ── Sumar efectivo: abre "Nuevo movimiento" como ingreso en efectivo ──
+function openCashIncome(){
+  openAddModal();
+  setType('i', true);
+  selectedCat = 'other';
+  renderCategoryPills(CAT_INC);
+  setAcct('cash');
+  document.getElementById('modalTitle').textContent = 'Sumar efectivo';
+  document.getElementById('addSaveBtn').textContent = 'Sumar a mi efectivo';
+  document.getElementById('descInp').placeholder = 'Ej: Me pagaron en efectivo, propina…';
 }
 
 // ── Transferir todo el efectivo al saldo total ──
